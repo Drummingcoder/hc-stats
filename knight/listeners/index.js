@@ -5,7 +5,10 @@ import * as messages from './messages/index.js';
 import * as shortcuts from './shortcuts/index.js';
 import * as views from './views/index.js';
 
+console.log('listeners: module loaded');
+
 export const registerListeners = (app) => {
+  console.log('listeners: registerListeners called');
   actions.register(app);
   commands.register(app);
   events.register(app);
