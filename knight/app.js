@@ -11,6 +11,15 @@ const app = new App({
   logLevel: LogLevel.DEBUG,
 });
 
+app.message('hi', async ({ message, say }) => {
+  if (message.subtype === undefined
+    || message.subtype === 'bot_message'
+    || message.subtype === 'file_share'
+    || message.subtype === 'thread_broadcast') {
+    await say(`Hello, <@${message.user}>`);
+  }
+});
+
 registerListeners(app);
 
 (async () => {

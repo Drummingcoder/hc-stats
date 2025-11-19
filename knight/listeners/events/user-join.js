@@ -1,33 +1,14 @@
-const appHomeOpenedCallback = async ({ client, event, logger }) => {
-  // Ignore the `app_home_opened` event for anything but the Home tab
-  if (event.tab !== 'home') return;
-
+const userjoin = async ({ client, event, logger }) => {
   try {
-    await client.views.publish({
-      user_id: event.user,
-      view: {
-        type: 'home',
-        blocks: [
-          {
-            type: 'section',
-            text: {
-              type: 'mrkdwn',
-              text: `*Welcome home, <@${event.user}> :house:*`,
-            },
-          },
-          {
-            type: 'section',
-            text: {
-              type: 'mrkdwn',
-              text: 'Learn how home tabs can be more useful and interactive <https://api.slack.com/surfaces/tabs/using|*in the documentation*>.',
-            },
-          },
-        ],
-      },
+    const result = await client.chat.postMessage({
+      channel: "C09TXAZ8GAG",
+      text: `<@${event.user.id}>! has joined!`
     });
-  } catch (error) {
+    logger.info(result);
+  }
+  catch (error) {
     logger.error(error);
   }
 };
 
-export { appHomeOpenedCallback };
+export { userjoin };

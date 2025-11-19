@@ -1,5 +1,5 @@
 import { sampleMessageCallback } from './sample-message.js';
 
 export const register = (app) => {
-  /*.message('hello', sampleMessageCallback);*/
+  /*app.message("time to run and reset", sampleMessageCallback);*/
 };
