@@ -50,16 +50,10 @@
                 "channel_unarchive",
                 "channel_rename",
                 "emoji_changed",
-                "file_created",
-                "file_deleted",
-                "file_public",
-                "file_shared",
-                "file_unshared",
                 "subteam_created",
                 "subteam_updated",
                 "subteam_members_changed",
                 "team_join",
-                "user_change",
                 "user_huddle_changed",
                 "dnd_updated_user"
             ]

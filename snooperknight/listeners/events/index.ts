@@ -9,13 +9,65 @@ if (!AIRTABLE_PAT || !AIRTABLE_BASE_ID) {
   throw new Error('Missing AIRTABLE_PAT or AIRTABLE_BASE_ID environment variables');
 }
 
-const base = new Airtable({ apiKey: "" }).base("appv3qGFvudMIng9P");
+const base = new Airtable({ apiKey: "AIRTABLE_PAT" }).base("AIRTABLE_BASE_ID");
 
 const register = (app: App) => {
   app.event('message', async ({ event, client, logger }) => {
     try {
       const msg = event as any;
-      if (msg.text == "time to run and go") {
+      if (msg.text == "time to run and go sigma76973213245") {
+        const allRecords = await base('Data').select({}).all();
+        const recordMap = Object.fromEntries(
+          allRecords.map(r => [r.fields["Field"], r])
+        );
+        await client.chat.postMessage({
+          channel: msg.channel,
+          text: `Yesterday: \n
+          New users joined: ${recordMap["New User"]?.fields["Number"] ?? 0}\n
+          New bots joined: ${recordMap["New Bot"]?.fields["Number"] ?? 0}\n
+          New workflows made: ${recordMap["New Workflow Bot"]?.fields["Number"] ?? 0}\n
+          Channels created: ${recordMap["Channel Created"]?.fields["Number"] ?? 0}\n
+          Channels archived: ${recordMap["Channel Archived"]?.fields["Number"] ?? 0}\n
+          Channels deleted: ${recordMap["Channel Deleted"]?.fields["Number"] ?? 0}\n
+          Channels unarchived: ${recordMap["Channel Unarchived"]?.fields["Number"] ?? 0}\n
+          Channels renamed: ${recordMap["Channel Renamed"]?.fields["Number"] ?? 0}\n
+          User groups added: ${recordMap["Subteam Added"]?.fields["Number"] ?? 0}\n
+          User groups edited: ${recordMap["Subteam Changed"]?.fields["Number"] ?? 0} with ${recordMap["Subteam Members Changed"]?.fields["Number"] ?? 0} of those edits being member changes\n
+          User groups deleted: ${recordMap["Subteam Deleted"]?.fields["Number"] ?? 0}\n
+          Emojis added: ${recordMap["Emoji Added"]?.fields["Number"] ?? 0}\n
+          Emoji alias added: ${recordMap["Emoji Alias Added"]?.fields["Number"] ?? 0}\n
+          Emojis changed: ${recordMap["Emoji Changed"]?.fields["Number"] ?? 0}\n
+          Emojis deleted: ${recordMap["Emoji Removed"]?.fields["Number"] ?? 0}\n
+          Number of times Do Not Disturb was turned on: ${recordMap["Dnd Set Active"]?.fields["Number"] ?? 0}\n
+          Number of times Do Not Disturb was turned off: ${recordMap["Dnd Set Inactive"]?.fields["Number"] ?? 0}\n
+          Number of times a huddle was joined: ${recordMap["Huddle Joined"]?.fields["Number"] ?? 0}\n
+          Number of times a huddle was left: ${recordMap["Huddle Left"]?.fields["Number"] ?? 0}\n
+          `,
+        });
+        await client.chat.postMessage({
+          channel: "C09UH2LCP1Q",
+          text: `Yesterday: \n
+          New users joined: ${recordMap["New User"]?.fields["Number"] ?? 0}\n
+          New bots joined: ${recordMap["New Bot"]?.fields["Number"] ?? 0}\n
+          New workflows made: ${recordMap["New Workflow Bot"]?.fields["Number"] ?? 0}\n
+          Channels created: ${recordMap["Channel Created"]?.fields["Number"] ?? 0}\n
+          Channels archived: ${recordMap["Channel Archived"]?.fields["Number"] ?? 0}\n
+          Channels deleted: ${recordMap["Channel Deleted"]?.fields["Number"] ?? 0}\n
+          Channels unarchived: ${recordMap["Channel Unarchived"]?.fields["Number"] ?? 0}\n
+          Channels renamed: ${recordMap["Channel Renamed"]?.fields["Number"] ?? 0}\n
+          User groups added: ${recordMap["Subteam Added"]?.fields["Number"] ?? 0}\n
+          User groups edited: ${recordMap["Subteam Changed"]?.fields["Number"] ?? 0} with ${recordMap["Subteam Members Changed"]?.fields["Number"] ?? 0} of those edits being member changes\n
+          User groups deleted: ${recordMap["Subteam Deleted"]?.fields["Number"] ?? 0}\n
+          Emojis added: ${recordMap["Emoji Added"]?.fields["Number"] ?? 0}\n
+          Emoji alias added: ${recordMap["Emoji Alias Added"]?.fields["Number"] ?? 0}\n
+          Emojis changed: ${recordMap["Emoji Changed"]?.fields["Number"] ?? 0}\n
+          Emojis deleted: ${recordMap["Emoji Removed"]?.fields["Number"] ?? 0}\n
+          Number of times Do Not Disturb was turned on: ${recordMap["Dnd Set Active"]?.fields["Number"] ?? 0}\n
+          Number of times Do Not Disturb was turned off: ${recordMap["Dnd Set Inactive"]?.fields["Number"] ?? 0}\n
+          Number of times a huddle was joined: ${recordMap["Huddle Joined"]?.fields["Number"] ?? 0}\n
+          Number of times a huddle was left: ${recordMap["Huddle Left"]?.fields["Number"] ?? 0}\n
+          `,
+        });
         const rep1 = await client.chat.postMessage({
           channel: msg.channel,
           text: `New users for today: `,
@@ -24,25 +76,48 @@ const register = (app: App) => {
           channel: msg.channel,
           text: `New bots for today: `,
         });
-
+        const rep100 = await client.chat.postMessage({
+          channel: "C09UH2LCP1Q",
+          text: `New bots for today: `,
+        });
         const rep3 = await client.chat.postMessage({
           channel: msg.channel,
+          text: `Channels created: `,
+        });
+        const rep99 = await client.chat.postMessage({
+          channel: "C09UH2LCP1Q",
           text: `Channels created: `,
         });
         const rep4 = await client.chat.postMessage({
           channel: msg.channel,
           text: `Channels archived: `,
         });
+        const rep98 = await client.chat.postMessage({
+          channel: "C09UH2LCP1Q",
+          text: `Channels archived: `,
+        });
         const rep5 = await client.chat.postMessage({
           channel: msg.channel,
+          text: `Channels deleted: `,
+        });
+        const rep97 = await client.chat.postMessage({
+          channel: "C09UH2LCP1Q",
           text: `Channels deleted: `,
         });
         const rep6 = await client.chat.postMessage({
           channel: msg.channel,
           text: `Channels unarchived: `,
         });
+        const rep96 = await client.chat.postMessage({
+          channel: "C09UH2LCP1Q",
+          text: `Channels unarchived: `,
+        });
         const rep7 = await client.chat.postMessage({
           channel: msg.channel,
+          text: `Channels renamed: `,
+        });
+        const rep95 = await client.chat.postMessage({
+          channel: "C09UH2LCP1Q",
           text: `Channels renamed: `,
         });
         const rep8 = await client.chat.postMessage({
@@ -61,13 +136,49 @@ const register = (app: App) => {
           channel: msg.channel,
           text: `Emojis added: `,
         });
+        const rep94 = await client.chat.postMessage({
+          channel: "C09UH2LCP1Q",
+          text: `Emojis added: `,
+        });
+        const rep16 = await client.chat.postMessage({
+          channel: msg.channel,
+          text: `Emoji aliases added: `,
+        });
+        const rep93 = await client.chat.postMessage({
+          channel: "C09UH2LCP1Q",
+          text: `Emoji aliases added: `,
+        });
         const rep12 = await client.chat.postMessage({
           channel: msg.channel,
+          text: `Emojis edited: `,
+        });
+        const rep92 = await client.chat.postMessage({
+          channel: "C09UH2LCP1Q",
           text: `Emojis edited: `,
         });
         const rep13 = await client.chat.postMessage({
           channel: msg.channel,
           text: `Emojis removed: `,
+        });
+        const rep91 = await client.chat.postMessage({
+          channel: "C09UH2LCP1Q",
+          text: `Emojis removed: `,
+        });
+        const rep14 = await client.chat.postMessage({
+          channel: msg.channel,
+          text: `Do Not Disturb set to true: `,
+        });
+        const rep15 = await client.chat.postMessage({
+          channel: msg.channel,
+          text: `Do Not Disturb set to false: `,
+        });
+        const rep17 = await client.chat.postMessage({
+          channel: msg.channel,
+          text: `Huddle joiners: `,
+        });
+        const rep18 = await client.chat.postMessage({
+          channel: msg.channel,
+          text: `Huddle leavers: `,
         });
         const airtablePayload = [
           {
@@ -81,49 +192,56 @@ const register = (app: App) => {
             fields: { 
               "Field": "New Bot", 
               "Messagets": rep2.ts,
-              "Number": 0
+              "Number": 0,
+              "PubMes": rep100.ts,
             }
           },
           {
             fields: { 
               "Field": "New Workflow Bot", 
               "Messagets": rep2.ts,
-              "Number": 0
+              "Number": 0,
+              "PubMes": rep100.ts,
             }
           }, 
           {
             fields: { 
               "Field": "Channel Created", 
               "Messagets": rep3.ts,
-              "Number": 0
+              "Number": 0,
+              "PubMes": rep99.ts,
             }
           },
           {
             fields: { 
               "Field": "Channel Archived", 
               "Messagets": rep4.ts,
-              "Number": 0
+              "Number": 0,
+              "PubMes": rep98.ts,
             }
           }, 
           {
             fields: { 
               "Field": "Channel Deleted", 
               "Messagets": rep5.ts,
-              "Number": 0
+              "Number": 0,
+              "PubMes": rep97.ts,
             }
           }, 
           {
             fields: { 
               "Field": "Channel Unarchived", 
               "Messagets": rep6.ts,
-              "Number": 0
+              "Number": 0, 
+              "PubMes": rep96.ts,
             }
           },
           {
             fields: { 
               "Field": "Channel Renamed", 
               "Messagets": rep7.ts,
-              "Number": 0
+              "Number": 0,
+              "PubMes": rep95.ts,
             }
           },
           {
@@ -158,20 +276,59 @@ const register = (app: App) => {
             fields: { 
               "Field": "Emoji Added", 
               "Messagets": rep11.ts,
-              "Number": 0
+              "Number": 0,
+              "PubMes": rep94.ts,
             }
           },
           {
             fields: { 
               "Field": "Emoji Changed", 
               "Messagets": rep12.ts,
-              "Number": 0
+              "Number": 0,
+              "PubMes": rep92.ts,
             }
           },
           {
             fields: { 
               "Field": "Emoji Removed", 
               "Messagets": rep13.ts,
+              "Number": 0,
+              "PubMes": rep91.ts,
+            }
+          },
+          {
+            fields: { 
+              "Field": "Dnd Set Active", 
+              "Messagets": rep14.ts,
+              "Number": 0,
+            }
+          },
+          {
+            fields: { 
+              "Field": "Dnd Set Inactive", 
+              "Messagets": rep15.ts,
+              "Number": 0
+            }
+          },
+          {
+            fields: { 
+              "Field": "Emoji Alias Added", 
+              "Messagets": rep16.ts,
+              "Number": 0,
+              "PubMes": rep93.ts,
+            }
+          },
+          {
+            fields: { 
+              "Field": "Huddle Joined", 
+              "Messagets": rep17.ts,
+              "Number": 0
+            }
+          },
+          {
+            fields: { 
+              "Field": "Huddle Left", 
+              "Messagets": rep18.ts,
               "Number": 0
             }
           }
@@ -248,19 +405,54 @@ const register = (app: App) => {
         }).firstPage();
         const recordId12 = records12[0].id;
         await base('Data').update([{ id: recordId12, fields: airtablePayload[11].fields }]);
-        const records12 = await base('Data').select({
+        const records13 = await base('Data').select({
           maxRecords: 1,
-          filterByFormula: `{Field} = "Subteam Deleted"`
+          filterByFormula: `{Field} = "Emoji Added"`
         }).firstPage();
-        const recordId12 = records12[0].id;
-        await base('Data').update([{ id: recordId12, fields: airtablePayload[11].fields }]);
-        const records12 = await base('Data').select({
+        const recordId13 = records13[0].id;
+        await base('Data').update([{ id: recordId13, fields: airtablePayload[12].fields }]);
+        const records14 = await base('Data').select({
           maxRecords: 1,
-          filterByFormula: `{Field} = "Subteam Deleted"`
+          filterByFormula: `{Field} = "Emoji Changed"`
         }).firstPage();
-        const recordId12 = records12[0].id;
-        await base('Data').update([{ id: recordId12, fields: airtablePayload[11].fields }]);
-        
+        const recordId14 = records14[0].id;
+        await base('Data').update([{ id: recordId14, fields: airtablePayload[13].fields }]);
+        const records15 = await base('Data').select({
+          maxRecords: 1,
+          filterByFormula: `{Field} = "Emoji Removed"`
+        }).firstPage();
+        const recordId15 = records15[0].id;
+        await base('Data').update([{ id: recordId15, fields: airtablePayload[14].fields }]);
+        const records16 = await base('Data').select({
+          maxRecords: 1,
+          filterByFormula: `{Field} = "Dnd Set Active"`
+        }).firstPage();
+        const recordId16 = records16[0].id;
+        await base('Data').update([{ id: recordId16, fields: airtablePayload[15].fields }]);
+        const records17 = await base('Data').select({
+          maxRecords: 1,
+          filterByFormula: `{Field} = "Dnd Set Inactive"`
+        }).firstPage();
+        const recordId17 = records17[0].id;
+        await base('Data').update([{ id: recordId17, fields: airtablePayload[16].fields }]);
+        const records18 = await base('Data').select({
+          maxRecords: 1,
+          filterByFormula: `{Field} = "Emoji Alias Added"`
+        }).firstPage();
+        const recordId18 = records18[0].id;
+        await base('Data').update([{ id: recordId18, fields: airtablePayload[17].fields }]);
+        const records19 = await base('Data').select({
+          maxRecords: 1,
+          filterByFormula: `{Field} = "Huddle Joined"`
+        }).firstPage();
+        const recordId19 = records19[0].id;
+        await base('Data').update([{ id: recordId19, fields: airtablePayload[18].fields }]);
+        const records20 = await base('Data').select({
+          maxRecords: 1,
+          filterByFormula: `{Field} = "Huddle Left"`
+        }).firstPage();
+        const recordId20 = records20[0].id;
+        await base('Data').update([{ id: recordId20, fields: airtablePayload[19].fields }]);
       }
     } catch (error) {
       logger.error('Error handling message event', error);
@@ -361,12 +553,21 @@ const register = (app: App) => {
       const ts = await base("Data").select({
         maxRecords: 10,
         filterByFormula: formula,
-        fields: ['Field', 'Messagets', 'Number'] 
+        fields: ['Field', 'Messagets', 'Number', 'PubMes'] 
       }).firstPage();
       const rep1 = await client.chat.postMessage({
         channel: "C09TXAZ8GAG",
         text: `<#${event.channel.id}> (${event.channel.name}) by <@${event.channel.creator}> has been created.`,
         thread_ts: ts[0].fields.Messagets,
+      });
+      await client.chat.postMessage({
+        channel: "C09UH2LCP1Q",
+        text: `<#${event.channel.id}> (${event.channel.name}) by <@${event.channel.creator}> has been created.`,
+        thread_ts: ts[0].fields.PubMes,
+      });
+      await client.chat.postMessage({
+        channel: "C09UH2LCP1Q",
+        text: `<#${event.channel.id}> (${event.channel.name}) by <@${event.channel.creator}> has been created.`,
       });
       const airtablePayload = [
         {
@@ -390,12 +591,21 @@ const register = (app: App) => {
       const ts = await base("Data").select({
         maxRecords: 10,
         filterByFormula: formula,
-        fields: ['Field', 'Messagets', 'Number'] 
+        fields: ['Field', 'Messagets', 'Number', 'PubMes']  
       }).firstPage();
       const rep1 = await client.chat.postMessage({
         channel: "C09TXAZ8GAG",
         text: `<#${event.channel}> was archived by <@${event.user}>.`,
         thread_ts: ts[0].fields.Messagets,
+      });
+      await client.chat.postMessage({
+        channel: "C09UH2LCP1Q",
+        text: `<#${event.channel}> was archived by <@${event.user}>.`,
+        thread_ts: ts[0].fields.PubMes,
+      });
+      await client.chat.postMessage({
+        channel: "C09UH2LCP1Q",
+        text: `<#${event.channel}> was archived by <@${event.user}>.`,
       });
       const airtablePayload = [
         {
@@ -419,12 +629,21 @@ const register = (app: App) => {
       const ts = await base("Data").select({
         maxRecords: 10,
         filterByFormula: formula,
-        fields: ['Field', 'Messagets', 'Number'] 
+        fields: ['Field', 'Messagets', 'Number', 'PubMes'] 
       }).firstPage();
       const rep1 = await client.chat.postMessage({
         channel: "C09TXAZ8GAG",
         text: `<#${event.channel}> was deleted.`,
         thread_ts: ts[0].fields.Messagets,
+      });
+      await client.chat.postMessage({
+        channel: "C09UH2LCP1Q",
+        text: `<#${event.channel}> was deleted.`,
+        thread_ts: ts[0].fields.PubMes,
+      });
+      await client.chat.postMessage({
+        channel: "C09UH2LCP1Q",
+        text: `<#${event.channel}> was deleted.`,
       });
       const airtablePayload = [
         {
@@ -448,12 +667,21 @@ const register = (app: App) => {
       const ts = await base("Data").select({
         maxRecords: 10,
         filterByFormula: formula,
-        fields: ['Field', 'Messagets', 'Number'] 
+        fields: ['Field', 'Messagets', 'Number', 'PubMes']  
       }).firstPage();
       const rep1 = await client.chat.postMessage({
         channel: "C09TXAZ8GAG",
         text: `<#${event.channel.id}> (${event.channel.name}) was renamed.`,
         thread_ts: ts[0].fields.Messagets,
+      });
+      await client.chat.postMessage({
+        channel: "C09UH2LCP1Q",
+        text: `<#${event.channel.id}> (${event.channel.name}) was renamed.`,
+        thread_ts: ts[0].fields.PubMes,
+      });
+      await client.chat.postMessage({
+        channel: "C09UH2LCP1Q",
+        text: `<#${event.channel.id}> (${event.channel.name}) was renamed.`,
       });
       const airtablePayload = [
         {
@@ -477,12 +705,21 @@ const register = (app: App) => {
       const ts = await base("Data").select({
         maxRecords: 10,
         filterByFormula: formula,
-        fields: ['Field', 'Messagets', 'Number'] 
+        fields: ['Field', 'Messagets', 'Number', 'PubMes'] 
       }).firstPage();
       const rep1 = await client.chat.postMessage({
         channel: "C09TXAZ8GAG",
         text: `<#${event.channel}> was unarchived by <@${event.user}>.`,
         thread_ts: ts[0].fields.Messagets,
+      });
+      await client.chat.postMessage({
+        channel: "C09UH2LCP1Q",
+        text: `<#${event.channel}> was unarchived by <@${event.user}>.`,
+        thread_ts: ts[0].fields.PubMes,
+      });
+      await client.chat.postMessage({
+        channel: "C09UH2LCP1Q",
+        text: `<#${event.channel}> was unarchived by <@${event.user}>.`,
       });
       const airtablePayload = [
         {
@@ -560,7 +797,7 @@ const register = (app: App) => {
 
       let removedarray = "none";
       if (event.removed_users && event.removed_users.length > 0) {
-        removedarray = event.removed_users.map(id => `<#${id}>`).join(', ');
+        removedarray = event.removed_users.map(id => `<@${id}>`).join(', ');
       }
 
       const rep1 = await client.chat.postMessage({
@@ -671,21 +908,128 @@ const register = (app: App) => {
   app.event('emoji_changed', async ({ event, client, logger }) => {
     try {
       if (event.subtype == 'add') {
-        const formula = `{Field} = "Emoji Added"`;
+        if (event.value?.startsWith("alias")) {
+          const formula = `{Field} = "Emoji Alias Added"`;
+          const ts = await base("Data").select({
+            maxRecords: 10,
+            filterByFormula: formula,
+            fields: ['Field', 'Messagets', 'Number', 'PubMes'] 
+          }).firstPage();
+          const rep1 = await client.chat.postMessage({
+            channel: "C09TXAZ8GAG",
+            text: `:${event.name}: was added (alias of :${event.value.split(":")[1]}:)!`,
+            thread_ts: ts[0].fields.Messagets,
+          });
+          await client.chat.postMessage({
+            channel: "C09UH2LCP1Q",
+            text: `:${event.name}: was added (alias of :${event.value.split(":")[1]}:)!`,
+            thread_ts: ts[0].fields.PubMes,
+          });
+          await client.chat.postMessage({
+            channel: "C09UH2LCP1Q",
+            text: `:${event.name}: was added (alias of :${event.value.split(":")[1]}:)!`,
+          });
+          const airtablePayload = [
+            {
+              fields: { 
+                "Field": "Emoji Alias Added",
+                "Messagets": rep1.ts,
+                "Number": (ts[0].fields.Number + 1)
+              }
+            }
+          ];
+          const result = await base('Data').update([{ id: ts[0].id, fields: airtablePayload[0].fields }]);
+          logger.info(result);
+        } else {
+          const formula = `{Field} = "Emoji Added"`;
+          const ts = await base("Data").select({
+            maxRecords: 10,
+            filterByFormula: formula,
+            fields: ['Field', 'Messagets', 'Number', 'PubMes']
+          }).firstPage();
+          const rep1 = await client.chat.postMessage({
+            channel: "C09TXAZ8GAG",
+            text: `:${event.name}: was added!`,
+            thread_ts: ts[0].fields.Messagets,
+          });
+          await client.chat.postMessage({
+            channel: "C09UH2LCP1Q",
+            text: `:${event.name}: was added!`,
+            thread_ts: ts[0].fields.PubMes,
+          });
+          await client.chat.postMessage({
+            channel: "C09UH2LCP1Q",
+            text: `:${event.name}: was added!`,
+          });
+          const airtablePayload = [
+            {
+              fields: { 
+                "Field": "Emoji Added",
+                "Messagets": rep1.ts,
+                "Number": (ts[0].fields.Number + 1)
+              }
+            }
+          ];
+          const result = await base('Data').update([{ id: ts[0].id, fields: airtablePayload[0].fields }]);
+          logger.info(result);
+        }
+      } else if (event.subtype == 'remove') {
+        const formula = `{Field} = "Emoji Removed"`;
         const ts = await base("Data").select({
           maxRecords: 10,
           filterByFormula: formula,
-          fields: ['Field', 'Messagets', 'Number'] 
+          fields: ['Field', 'Messagets', 'Number', 'PubMes'] 
         }).firstPage();
         const rep1 = await client.chat.postMessage({
           channel: "C09TXAZ8GAG",
-          text: `:${event.name}: was added!`,
+          text: `${event.names} was removed.`,
           thread_ts: ts[0].fields.Messagets,
+        });
+        await client.chat.postMessage({
+          channel: "C09UH2LCP1Q",
+          text: `${event.names} was removed.`,
+          thread_ts: ts[0].fields.PubMes,
+        });
+        await client.chat.postMessage({
+          channel: "C09UH2LCP1Q",
+          text: `${event.names} was removed.`,
         });
         const airtablePayload = [
           {
             fields: { 
-              "Field": "Emoji Added",
+              "Field": "Emoji Removed",
+              "Messagets": rep1.ts,
+              "Number": (ts[0].fields.Number + 1),
+            }
+          }
+        ];
+        const result = await base('Data').update([{ id: ts[0].id, fields: airtablePayload[0].fields }]);
+        logger.info(result);
+      } else if (event.subtype == "rename") {
+        const formula = `{Field} = "Emoji Changed"`;
+        const ts = await base("Data").select({
+          maxRecords: 10,
+          filterByFormula: formula,
+          fields: ['Field', 'Messagets', 'Number', 'PubMes'] 
+        }).firstPage();
+        const rep1 = await client.chat.postMessage({
+          channel: "C09TXAZ8GAG",
+          text: `${event.old_name} was renamed to ${event.new_name}.`,
+          thread_ts: ts[0].fields.Messagets,
+        });
+        await client.chat.postMessage({
+            channel: "C09UH2LCP1Q",
+            text: `${event.old_name} was renamed to ${event.new_name}.`,
+            thread_ts: ts[0].fields.PubMes,
+          });
+          await client.chat.postMessage({
+            channel: "C09UH2LCP1Q",
+            text: `${event.old_name} was renamed to ${event.new_name}.`,
+          });
+        const airtablePayload = [
+          {
+            fields: { 
+              "Field": "Emoji Changed",
               "Messagets": rep1.ts,
               "Number": (ts[0].fields.Number + 1)
             }
@@ -693,8 +1037,48 @@ const register = (app: App) => {
         ];
         const result = await base('Data').update([{ id: ts[0].id, fields: airtablePayload[0].fields }]);
         logger.info(result);
-      } else if (event.subtype == 'remove') {
-        const formula = `{Field} = "Emoji Removed"`;
+      }
+      logger.info(event);
+    } catch (error) {
+      logger.error('Error handling message event', error);
+    }
+  });
+
+  app.event('dnd_updated_user', async ({ event, client, logger }) => {
+    try {
+      if (event.dnd_status.dnd_enabled) {
+        const formula = `{Field} = "Dnd Set Active"`;
+        const ts = await base("Data").select({
+          maxRecords: 10,
+          filterByFormula: formula,
+          fields: ['Field', 'Messagets', 'Number'] 
+        }).firstPage();
+        const start = event.dnd_status.next_dnd_start_ts
+          ? new Date(event.dnd_status.next_dnd_start_ts * 1000)
+          : null;
+        const end = event.dnd_status.next_dnd_end_ts
+          ? new Date(event.dnd_status.next_dnd_end_ts * 1000)
+          : null;
+        const startStr = start ? start.toLocaleString() : 'unknown';
+        const endStr = end ? end.toLocaleString() : 'unknown';
+        const rep1 = await client.chat.postMessage({
+          channel: "C09TXAZ8GAG",
+          text: `<@${event.user}> has turned on their Do Not Disturb\nStarts: ${startStr}\nEnds: ${endStr}!`,
+          thread_ts: ts[0].fields.Messagets,
+        });
+        const airtablePayload = [
+          {
+            fields: { 
+              "Field": "Dnd Set Active",
+              "Messagets": rep1.ts,
+              "Number": (ts[0].fields.Number + 1)
+            }
+          }
+        ];
+        const result = await base('Data').update([{ id: ts[0].id, fields: airtablePayload[0].fields }]);
+        logger.info(result);
+      } else if (event.dnd_status.dnd_enabled == false) {
+        const formula = `{Field} = "Dnd Set Inactive"`;
         const ts = await base("Data").select({
           maxRecords: 10,
           filterByFormula: formula,
@@ -702,21 +1086,77 @@ const register = (app: App) => {
         }).firstPage();
         const rep1 = await client.chat.postMessage({
           channel: "C09TXAZ8GAG",
-          text: `:${event.name}: was removed.`,
+          text: `<@${event.user}> has turned off their Do Not Disturb.`,
           thread_ts: ts[0].fields.Messagets,
         });
         const airtablePayload = [
           {
             fields: { 
-              "Field": "Emoji Removed",
+              "Field": "Dnd Set Inactive",
               "Messagets": rep1.ts,
               "Number": (ts[0].fields.Number + 1)
             }
           }
         ];
         const result = await base('Data').update([{ id: ts[0].id, fields: airtablePayload[0].fields }]);
+        logger.info(result);
       }
-      logger.info(event);
+    } catch (error) {
+      logger.error('Error handling message event', error);
+    }
+  });
+
+  app.event('user_huddle_changed', async ({ event, client, logger }) => {
+    try {
+      if (event.user.profile.huddle_state == "in_a_huddle") {
+        const formula = `{Field} = "Huddle Joined"`;
+        const ts = await base("Data").select({
+          maxRecords: 10,
+          filterByFormula: formula,
+          fields: ['Field', 'Messagets', 'Number'] 
+        }).firstPage();
+        const callId = (event.user.profile as any).huddle_state_call_id;
+        const callInfo = callId ? ` (call ID: \`${callId}\`)` : "";
+        const rep1 = await client.chat.postMessage({
+          channel: "C09TXAZ8GAG",
+          text: `<@${event.user.id}> has joined a huddle ${callInfo}!`,
+          thread_ts: ts[0].fields.Messagets,
+        });
+        const airtablePayload = [
+          {
+            fields: { 
+              "Field": "Huddle Joined",
+              "Messagets": rep1.ts,
+              "Number": (ts[0].fields.Number + 1)
+            }
+          }
+        ];
+        const result = await base('Data').update([{ id: ts[0].id, fields: airtablePayload[0].fields }]);
+        logger.info(result);
+      } else {
+        const formula = `{Field} = "Huddle Left"`;
+        const ts = await base("Data").select({
+          maxRecords: 10,
+          filterByFormula: formula,
+          fields: ['Field', 'Messagets', 'Number'] 
+        }).firstPage();
+        const rep1 = await client.chat.postMessage({
+          channel: "C09TXAZ8GAG",
+          text: `<@${event.user.id}> has left a huddle.`,
+          thread_ts: ts[0].fields.Messagets,
+        });
+        const airtablePayload = [
+          {
+            fields: { 
+              "Field": "Huddle Left",
+              "Messagets": rep1.ts,
+              "Number": (ts[0].fields.Number + 1)
+            }
+          }
+        ];
+        const result = await base('Data').update([{ id: ts[0].id, fields: airtablePayload[0].fields }]);
+        logger.info(result);
+      }
     } catch (error) {
       logger.error('Error handling message event', error);
     }
