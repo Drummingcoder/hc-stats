@@ -467,19 +467,21 @@ const register = (app: App) => {
         const ts = await base("Data").select({
           maxRecords: 10,
           filterByFormula: formula,
-          fields: ['Field', 'Messagets', 'Number'] 
+          fields: ['Field', 'Messagets', 'Number', 'PubMes'] 
         }).firstPage();
+        const messagets = ts[0].fields.Messagets as string | undefined;
+        let num = Number(ts[0].fields.Number ?? 0);
         const rep1 = await client.chat.postMessage({
           channel: "C09TXAZ8GAG",
           text: `<@${event.user.id}> the workflow bot has joined! Join type: ${event.type}`,
-          thread_ts: ts[0].fields.Messagets,
+          thread_ts: messagets,
         });
         const airtablePayload = [
           {
             fields: { 
               "Field": "New Workflow Bot", 
               "Messagets": rep1.ts,
-              "Number": (ts[0].fields.Number + 1)
+              "Number": (num + 1)
             }
           }
         ];
@@ -490,19 +492,21 @@ const register = (app: App) => {
         const ts = await base("Data").select({
           maxRecords: 10,
           filterByFormula: formula,
-          fields: ['Field', 'Messagets', 'Number'] 
+          fields: ['Field', 'Messagets', 'Number', 'PubMes']
         }).firstPage();
+        const messagets = ts[0].fields.Messagets as string | undefined;
+        let num = Number(ts[0].fields.Number ?? 0);
         const rep1 = await client.chat.postMessage({
           channel: "C09TXAZ8GAG",
           text: `<@${event.user.id}> the app has joined! Join type: ${event.type}`,
-          thread_ts: ts[0].fields.Messagets,
+          thread_ts: messagets,
         });
         const airtablePayload = [
           {
             fields: { 
               "Field": "New Bot", 
               "Messagets": rep1.ts,
-              "Number": (ts[0].fields.Number + 1)
+              "Number": (num + 1)
             }
           }
         ];
@@ -515,6 +519,8 @@ const register = (app: App) => {
           filterByFormula: formula,
           fields: ['Field', 'Messagets', 'Number'] 
         }).firstPage();
+        const messagets = ts[0].fields.Messagets as string | undefined;
+        let num = Number(ts[0].fields.Number ?? 0);
         const rep1 = await client.chat.postMessage({
           channel: "C09TXAZ8GAG",
           text: `<@${event.user.id}> has joined! Details:\n
@@ -528,14 +534,14 @@ const register = (app: App) => {
           Email: ${event.user.profile?.email ?? 'N/A'}\n
           External (Slack Connect): ${event.user.is_stranger ?? false}\n
           Invited: ${event.user.is_invited_user}\n`, 
-          thread_ts: ts[0].fields.Messagets,
+          thread_ts: messagets,
         });
         const airtablePayload = [
           {
             fields: { 
               "Field": "New User", 
               "Messagets": rep1.ts,
-              "Number": (ts[0].fields.Number + 1)
+              "Number": (num + 1)
             }
           }
         ];
@@ -555,15 +561,18 @@ const register = (app: App) => {
         filterByFormula: formula,
         fields: ['Field', 'Messagets', 'Number', 'PubMes'] 
       }).firstPage();
+      const messagets = ts[0].fields.Messagets as string | undefined;
+      let num = Number(ts[0].fields.Number ?? 0);
       const rep1 = await client.chat.postMessage({
         channel: "C09TXAZ8GAG",
         text: `<#${event.channel.id}> (${event.channel.name}) by <@${event.channel.creator}> has been created.`,
-        thread_ts: ts[0].fields.Messagets,
+        thread_ts: messagets,
       });
+      const pubmes = ts[0].fields.PubMes as string | undefined;
       await client.chat.postMessage({
         channel: "C09UH2LCP1Q",
         text: `<#${event.channel.id}> (${event.channel.name}) by <@${event.channel.creator}> has been created.`,
-        thread_ts: ts[0].fields.PubMes,
+        thread_ts: pubmes,
       });
       await client.chat.postMessage({
         channel: "C09UH2LCP1Q",
@@ -574,7 +583,7 @@ const register = (app: App) => {
           fields: { 
             "Field": "Channel Created", 
             "Messagets": rep1.ts,
-            "Number": (ts[0].fields.Number + 1)
+            "Number": (num + 1)
           }
         }
       ];
@@ -593,15 +602,18 @@ const register = (app: App) => {
         filterByFormula: formula,
         fields: ['Field', 'Messagets', 'Number', 'PubMes']  
       }).firstPage();
+      const messagets = ts[0].fields.Messagets as string | undefined;
+      let num = Number(ts[0].fields.Number ?? 0);
       const rep1 = await client.chat.postMessage({
         channel: "C09TXAZ8GAG",
         text: `<#${event.channel}> was archived by <@${event.user}>.`,
-        thread_ts: ts[0].fields.Messagets,
+        thread_ts: messagets,
       });
+      const pubmes = ts[0].fields.PubMes as string | undefined;
       await client.chat.postMessage({
         channel: "C09UH2LCP1Q",
         text: `<#${event.channel}> was archived by <@${event.user}>.`,
-        thread_ts: ts[0].fields.PubMes,
+        thread_ts: pubmes,
       });
       await client.chat.postMessage({
         channel: "C09UH2LCP1Q",
@@ -612,7 +624,7 @@ const register = (app: App) => {
           fields: { 
             "Field": "Channel Archived", 
             "Messagets": rep1.ts,
-            "Number": (ts[0].fields.Number + 1)
+            "Number": (num + 1)
           }
         }
       ];
@@ -631,15 +643,18 @@ const register = (app: App) => {
         filterByFormula: formula,
         fields: ['Field', 'Messagets', 'Number', 'PubMes'] 
       }).firstPage();
+      const messagets = ts[0].fields.Messagets as string | undefined;
+      let num = Number(ts[0].fields.Number ?? 0);
       const rep1 = await client.chat.postMessage({
         channel: "C09TXAZ8GAG",
         text: `<#${event.channel}> was deleted.`,
-        thread_ts: ts[0].fields.Messagets,
+        thread_ts: messagets,
       });
+      const pubmes = ts[0].fields.PubMes as string | undefined;
       await client.chat.postMessage({
         channel: "C09UH2LCP1Q",
         text: `<#${event.channel}> was deleted.`,
-        thread_ts: ts[0].fields.PubMes,
+        thread_ts: pubmes,
       });
       await client.chat.postMessage({
         channel: "C09UH2LCP1Q",
@@ -650,7 +665,7 @@ const register = (app: App) => {
           fields: { 
             "Field": "Channel Deleted", 
             "Messagets": rep1.ts,
-            "Number": (ts[0].fields.Number + 1)
+            "Number": (num + 1)
           }
         }
       ];
@@ -669,15 +684,18 @@ const register = (app: App) => {
         filterByFormula: formula,
         fields: ['Field', 'Messagets', 'Number', 'PubMes']  
       }).firstPage();
+      const messagets = ts[0].fields.Messagets as string | undefined;
+      let num = Number(ts[0].fields.Number ?? 0);
       const rep1 = await client.chat.postMessage({
         channel: "C09TXAZ8GAG",
         text: `<#${event.channel.id}> (${event.channel.name}) was renamed.`,
-        thread_ts: ts[0].fields.Messagets,
+        thread_ts: messagets,
       });
+      const pubmes = ts[0].fields.PubMes as string | undefined;
       await client.chat.postMessage({
         channel: "C09UH2LCP1Q",
         text: `<#${event.channel.id}> (${event.channel.name}) was renamed.`,
-        thread_ts: ts[0].fields.PubMes,
+        thread_ts: pubmes,
       });
       await client.chat.postMessage({
         channel: "C09UH2LCP1Q",
@@ -688,7 +706,7 @@ const register = (app: App) => {
           fields: { 
             "Field": "Channel Renamed", 
             "Messagets": rep1.ts,
-            "Number": (ts[0].fields.Number + 1)
+            "Number": (num + 1)
           }
         }
       ];
@@ -707,15 +725,18 @@ const register = (app: App) => {
         filterByFormula: formula,
         fields: ['Field', 'Messagets', 'Number', 'PubMes'] 
       }).firstPage();
+      const messagets = ts[0].fields.Messagets as string | undefined;
+      let num = Number(ts[0].fields.Number ?? 0);
       const rep1 = await client.chat.postMessage({
         channel: "C09TXAZ8GAG",
         text: `<#${event.channel}> was unarchived by <@${event.user}>.`,
-        thread_ts: ts[0].fields.Messagets,
+        thread_ts: messagets,
       });
+      const pubmes = ts[0].fields.PubMes as string | undefined;
       await client.chat.postMessage({
         channel: "C09UH2LCP1Q",
         text: `<#${event.channel}> was unarchived by <@${event.user}>.`,
-        thread_ts: ts[0].fields.PubMes,
+        thread_ts: pubmes,
       });
       await client.chat.postMessage({
         channel: "C09UH2LCP1Q",
@@ -726,7 +747,7 @@ const register = (app: App) => {
           fields: { 
             "Field": "Channel Unarchived", 
             "Messagets": rep1.ts,
-            "Number": (ts[0].fields.Number + 1)
+            "Number": (num + 1)
           }
         }
       ];
@@ -754,6 +775,8 @@ const register = (app: App) => {
       if (event.subteam.prefs?.channels && event.subteam.prefs.channels.length > 0) {
         channelarray = event.subteam.prefs.channels.map(id => `<#${id}>`).join(', ');
       }
+      const messagets = ts[0].fields.Messagets as string | undefined;
+      let num = Number(ts[0].fields.Number ?? 0);
       const rep1 = await client.chat.postMessage({
         channel: "C09TXAZ8GAG",
         text: `<!subteam^${event.subteam.id}> (${event.subteam.handle}) was made by <@${event.subteam.created_by}>. Details: \n
@@ -764,14 +787,14 @@ const register = (app: App) => {
           Channels: ${channelarray}\n
           Channel count: ${event.subteam.channel_count}
           `,
-        thread_ts: ts[0].fields.Messagets,
+        thread_ts: messagets,
       });
       const airtablePayload = [
         {
           fields: { 
             "Field": "Subteam Added", 
             "Messagets": rep1.ts,
-            "Number": (ts[0].fields.Number + 1)
+            "Number": (num + 1)
           }
         }
       ];
@@ -800,6 +823,8 @@ const register = (app: App) => {
         removedarray = event.removed_users.map(id => `<@${id}>`).join(', ');
       }
 
+      const messagets = ts[0].fields.Messagets as string | undefined;
+      let num = Number(ts[0].fields.Number ?? 0);
       const rep1 = await client.chat.postMessage({
         channel: "C09TXAZ8GAG",
         text: `<!subteam^${event.subteam_id}> change was a member one:\n
@@ -807,14 +832,14 @@ const register = (app: App) => {
         Added count: ${event.added_users_count}\n
         Deleted users: ${removedarray}\n
         Deleted count: ${event.removed_users_count}\n`,
-        thread_ts: ts[0].fields.Messagets,
+        thread_ts: messagets,
       });
       const airtablePayload = [
         {
           fields: { 
             "Field": "Subteam Members Changed", 
             "Messagets": rep1.ts,
-            "Number": (ts[0].fields.Number + 1)
+            "Number": (num + 1)
           }
         }
       ];
@@ -843,6 +868,8 @@ const register = (app: App) => {
           filterByFormula: formula,
           fields: ['Field', 'Messagets', 'Number'] 
         }).firstPage();
+        const messagets = ts[0].fields.Messagets as string | undefined;
+        let num = Number(ts[0].fields.Number ?? 0);
         const rep1 = await client.chat.postMessage({
           channel: "C09TXAZ8GAG",
           text: `<!subteam^${event.subteam.id}> was deleted by <@${event.subteam.deleted_by}>. Details:\n
@@ -855,14 +882,14 @@ const register = (app: App) => {
           Member count: ${event.subteam.user_count}\n
           Channels: ${channelarray}\n
           Channel count: ${event.subteam.channel_count}`,
-          thread_ts: ts[0].fields.Messagets,
+          thread_ts: messagets,
         });
         const airtablePayload = [
           {
             fields: { 
               "Field": "Subteam Deleted",
               "Messagets": rep1.ts,
-              "Number": (ts[0].fields.Number + 1)
+              "Number": (num + 1)
             }
           }
         ];
@@ -875,6 +902,8 @@ const register = (app: App) => {
           filterByFormula: formula,
           fields: ['Field', 'Messagets', 'Number'] 
         }).firstPage();
+        const messagets = ts[0].fields.Messagets as string | undefined;
+        let num = Number(ts[0].fields.Number ?? 0);
         const rep1 = await client.chat.postMessage({
           channel: "C09TXAZ8GAG",
           text: `<!subteam^${event.subteam.id}> was updated by <@${event.subteam.updated_by}>. Details:\n
@@ -886,14 +915,14 @@ const register = (app: App) => {
           Member count: ${event.subteam.user_count}\n
           Channels: ${channelarray}\n
           Channel count: ${event.subteam.channel_count}`,
-          thread_ts: ts[0].fields.Messagets,
+          thread_ts: messagets,
         });
         const airtablePayload = [
           {
             fields: { 
               "Field": "Subteam Changed", 
               "Messagets": rep1.ts,
-              "Number": (ts[0].fields.Number + 1)
+              "Number": (num + 1)
             }
           }
         ];
@@ -915,15 +944,18 @@ const register = (app: App) => {
             filterByFormula: formula,
             fields: ['Field', 'Messagets', 'Number', 'PubMes'] 
           }).firstPage();
+          const messagets = ts[0].fields.Messagets as string | undefined;
+          let num = Number(ts[0].fields.Number ?? 0);
           const rep1 = await client.chat.postMessage({
             channel: "C09TXAZ8GAG",
             text: `:${event.name}: was added (alias of :${event.value.split(":")[1]}:)!`,
-            thread_ts: ts[0].fields.Messagets,
+            thread_ts: messagets,
           });
+          const pubmes = ts[0].fields.PubMes as string | undefined;
           await client.chat.postMessage({
             channel: "C09UH2LCP1Q",
             text: `:${event.name}: was added (alias of :${event.value.split(":")[1]}:)!`,
-            thread_ts: ts[0].fields.PubMes,
+            thread_ts: pubmes,
           });
           await client.chat.postMessage({
             channel: "C09UH2LCP1Q",
@@ -934,7 +966,7 @@ const register = (app: App) => {
               fields: { 
                 "Field": "Emoji Alias Added",
                 "Messagets": rep1.ts,
-                "Number": (ts[0].fields.Number + 1)
+                "Number": (num + 1)
               }
             }
           ];
@@ -947,15 +979,18 @@ const register = (app: App) => {
             filterByFormula: formula,
             fields: ['Field', 'Messagets', 'Number', 'PubMes']
           }).firstPage();
+          const messagets = ts[0].fields.Messagets as string | undefined;
+          let num = Number(ts[0].fields.Number ?? 0);
           const rep1 = await client.chat.postMessage({
             channel: "C09TXAZ8GAG",
             text: `:${event.name}: was added!`,
-            thread_ts: ts[0].fields.Messagets,
+            thread_ts: messagets,
           });
+          const pubmes = ts[0].fields.PubMes as string | undefined;
           await client.chat.postMessage({
             channel: "C09UH2LCP1Q",
             text: `:${event.name}: was added!`,
-            thread_ts: ts[0].fields.PubMes,
+            thread_ts: pubmes,
           });
           await client.chat.postMessage({
             channel: "C09UH2LCP1Q",
@@ -966,7 +1001,7 @@ const register = (app: App) => {
               fields: { 
                 "Field": "Emoji Added",
                 "Messagets": rep1.ts,
-                "Number": (ts[0].fields.Number + 1)
+                "Number": (num + 1)
               }
             }
           ];
@@ -980,15 +1015,18 @@ const register = (app: App) => {
           filterByFormula: formula,
           fields: ['Field', 'Messagets', 'Number', 'PubMes'] 
         }).firstPage();
+        const messagets = ts[0].fields.Messagets as string | undefined;
+        let num = Number(ts[0].fields.Number ?? 0);
         const rep1 = await client.chat.postMessage({
           channel: "C09TXAZ8GAG",
           text: `${event.names} was removed.`,
-          thread_ts: ts[0].fields.Messagets,
+          thread_ts: messagets,
         });
+        const pubmes = ts[0].fields.PubMes as string | undefined;
         await client.chat.postMessage({
           channel: "C09UH2LCP1Q",
           text: `${event.names} was removed.`,
-          thread_ts: ts[0].fields.PubMes,
+          thread_ts: pubmes,
         });
         await client.chat.postMessage({
           channel: "C09UH2LCP1Q",
@@ -999,7 +1037,7 @@ const register = (app: App) => {
             fields: { 
               "Field": "Emoji Removed",
               "Messagets": rep1.ts,
-              "Number": (ts[0].fields.Number + 1),
+              "Number": (num + 1),
             }
           }
         ];
@@ -1012,15 +1050,18 @@ const register = (app: App) => {
           filterByFormula: formula,
           fields: ['Field', 'Messagets', 'Number', 'PubMes'] 
         }).firstPage();
+        const messagets = ts[0].fields.Messagets as string | undefined;
+        let num = Number(ts[0].fields.Number ?? 0);
+        const pubmes = ts[0].fields.PubMes as string | undefined;
         const rep1 = await client.chat.postMessage({
           channel: "C09TXAZ8GAG",
           text: `${event.old_name} was renamed to ${event.new_name}.`,
-          thread_ts: ts[0].fields.Messagets,
+          thread_ts: messagets,
         });
         await client.chat.postMessage({
             channel: "C09UH2LCP1Q",
             text: `${event.old_name} was renamed to ${event.new_name}.`,
-            thread_ts: ts[0].fields.PubMes,
+            thread_ts: pubmes,
           });
           await client.chat.postMessage({
             channel: "C09UH2LCP1Q",
@@ -1031,7 +1072,7 @@ const register = (app: App) => {
             fields: { 
               "Field": "Emoji Changed",
               "Messagets": rep1.ts,
-              "Number": (ts[0].fields.Number + 1)
+              "Number": (num + 1)
             }
           }
         ];
@@ -1061,17 +1102,19 @@ const register = (app: App) => {
           : null;
         const startStr = start ? start.toLocaleString() : 'unknown';
         const endStr = end ? end.toLocaleString() : 'unknown';
+        const messagets = ts[0].fields.Messagets as string | undefined;
+        let num = Number(ts[0].fields.Number ?? 0);
         const rep1 = await client.chat.postMessage({
           channel: "C09TXAZ8GAG",
           text: `<@${event.user}> has turned on their Do Not Disturb\nStarts: ${startStr}\nEnds: ${endStr}!`,
-          thread_ts: ts[0].fields.Messagets,
+          thread_ts: messagets,
         });
         const airtablePayload = [
           {
             fields: { 
               "Field": "Dnd Set Active",
               "Messagets": rep1.ts,
-              "Number": (ts[0].fields.Number + 1)
+              "Number": (num + 1)
             }
           }
         ];
@@ -1084,17 +1127,19 @@ const register = (app: App) => {
           filterByFormula: formula,
           fields: ['Field', 'Messagets', 'Number'] 
         }).firstPage();
+        const messagets = ts[0].fields.Messagets as string | undefined;
+        let num = Number(ts[0].fields.Number ?? 0);
         const rep1 = await client.chat.postMessage({
           channel: "C09TXAZ8GAG",
           text: `<@${event.user}> has turned off their Do Not Disturb.`,
-          thread_ts: ts[0].fields.Messagets,
+          thread_ts: messagets,
         });
         const airtablePayload = [
           {
             fields: { 
               "Field": "Dnd Set Inactive",
               "Messagets": rep1.ts,
-              "Number": (ts[0].fields.Number + 1)
+              "Number": (num + 1)
             }
           }
         ];
@@ -1117,17 +1162,19 @@ const register = (app: App) => {
         }).firstPage();
         const callId = (event.user.profile as any).huddle_state_call_id;
         const callInfo = callId ? ` (call ID: \`${callId}\`)` : "";
+        const messagets = ts[0].fields.Messagets as string | undefined;
+        let num = Number(ts[0].fields.Number ?? 0);
         const rep1 = await client.chat.postMessage({
           channel: "C09TXAZ8GAG",
           text: `<@${event.user.id}> has joined a huddle ${callInfo}!`,
-          thread_ts: ts[0].fields.Messagets,
+          thread_ts: messagets,
         });
         const airtablePayload = [
           {
             fields: { 
               "Field": "Huddle Joined",
               "Messagets": rep1.ts,
-              "Number": (ts[0].fields.Number + 1)
+              "Number": (num + 1)
             }
           }
         ];
@@ -1140,17 +1187,19 @@ const register = (app: App) => {
           filterByFormula: formula,
           fields: ['Field', 'Messagets', 'Number'] 
         }).firstPage();
+        let num = Number(ts[0].fields.Number ?? 0);
+        const messagets = ts[0].fields.Messagets as string | undefined;
         const rep1 = await client.chat.postMessage({
           channel: "C09TXAZ8GAG",
           text: `<@${event.user.id}> has left a huddle.`,
-          thread_ts: ts[0].fields.Messagets,
+          thread_ts: messagets,
         });
         const airtablePayload = [
           {
             fields: { 
               "Field": "Huddle Left",
               "Messagets": rep1.ts,
-              "Number": (ts[0].fields.Number + 1)
+              "Number": (num + 1)
             }
           }
         ];
