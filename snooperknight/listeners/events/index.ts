@@ -9,7 +9,7 @@ if (!AIRTABLE_PAT || !AIRTABLE_BASE_ID) {
   throw new Error('Missing AIRTABLE_PAT or AIRTABLE_BASE_ID environment variables');
 }
 
-const base = new Airtable({ apiKey: "AIRTABLE_PAT" }).base("AIRTABLE_BASE_ID");
+const base = new Airtable({ apiKey: AIRTABLE_PAT }).base(AIRTABLE_BASE_ID);
 
 const register = (app: App) => {
   app.event('message', async ({ event, client, logger }) => {
