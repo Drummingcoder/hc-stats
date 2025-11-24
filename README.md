@@ -20,7 +20,4 @@ you need to install the Slack CLI.
 It's as easy as that!
 
 ## Video:
-Uh no video cuz this bot isn't something you can really use, but can watch.
-
-Video of the channel checking feature of the bot in action:
-[https://github.com/Drummingcoder/find-the-channel/blob/main/Screen%20recording%202025-09-14%203.21.21%20PM.webm](https://github.com/user-attachments/assets/a17aed3b-d09f-4444-9b0b-bd9b1c4da554)
+Uh no video cuz this bot isn't something you can really use, but you can see it in action.
