@@ -476,6 +476,16 @@ const register = (app: App) => {
           text: `<@${event.user.id}> the workflow bot has joined! Join type: ${event.type}`,
           thread_ts: messagets,
         });
+        const pubmes = ts[0].fields.PubMes as string | undefined;
+        await client.chat.postMessage({
+          channel: "C09UH2LCP1Q",
+          text: `<@${event.user.id}> the workflow bot has joined! Join type: ${event.type}`,
+          thread_ts: pubmes,
+        });
+        await client.chat.postMessage({
+          channel: "C09UH2LCP1Q",
+          text: `<@${event.user.id}> the workflow bot has joined! Join type: ${event.type}`,
+        });
         const airtablePayload = [
           {
             fields: { 
@@ -500,6 +510,16 @@ const register = (app: App) => {
           channel: "C09TXAZ8GAG",
           text: `<@${event.user.id}> the app has joined! Join type: ${event.type}`,
           thread_ts: messagets,
+        });
+        const pubmes = ts[0].fields.PubMes as string | undefined;
+        await client.chat.postMessage({
+          channel: "C09UH2LCP1Q",
+          text: `<@${event.user.id}> the app has joined! Join type: ${event.type}`,
+          thread_ts: pubmes,
+        });
+        await client.chat.postMessage({
+          channel: "C09UH2LCP1Q",
+          text: `<@${event.user.id}> the app has joined! Join type: ${event.type}`,
         });
         const airtablePayload = [
           {
