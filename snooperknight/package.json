@@ -29,7 +29,8 @@
   "dependencies": {
     "@slack/bolt": "^4.6.0",
     "airtable": "^0.12.2",
-    "dotenv": "~17.2.3"
+    "dotenv": "~17.2.3",
+    "sqlite3": "^5.1.7"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.2",

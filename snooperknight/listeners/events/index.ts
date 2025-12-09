@@ -1,71 +1,116 @@
 import type { App } from '@slack/bolt';
 
-import Airtable from 'airtable';
-import { NONAME } from 'node:dns';
-const AIRTABLE_PAT = process.env.AIRTABLE_PAT;
-const AIRTABLE_BASE_ID = process.env.AIRTABLE_BASE_ID;
+import sqlite3 from 'sqlite3';
+import { existsSync, mkdirSync } from 'node:fs';
+import { dirname } from 'node:path';
+import { promisify } from 'node:util';
 
-if (!AIRTABLE_PAT || !AIRTABLE_BASE_ID) {
-  throw new Error('Missing AIRTABLE_PAT or AIRTABLE_BASE_ID environment variables');
+const DB_PATH = process.env.DB_PATH || './data/stats.db';
+
+// Ensure directory exists
+const dbDir = dirname(DB_PATH);
+if (!existsSync(dbDir)) {
+  mkdirSync(dbDir, { recursive: true });
 }
 
-const base = new Airtable({ apiKey: AIRTABLE_PAT }).base(AIRTABLE_BASE_ID);
+const db = new sqlite3.Database(DB_PATH);
+
+// Promisify database methods
+const dbRun = (sql: string, ...params: any[]) => {
+  return new Promise<void>((resolve, reject) => {
+    db.run(sql, ...params, function(err: Error | null) {
+      if (err) reject(err);
+      else resolve();
+    });
+  });
+};
+
+const dbGet = (sql: string, ...params: any[]) => {
+  return new Promise<any>((resolve, reject) => {
+    db.get(sql, ...params, (err: Error | null, row: any) => {
+      if (err) reject(err);
+      else resolve(row);
+    });
+  });
+};
+
+const dbAll = (sql: string, ...params: any[]) => {
+  return new Promise<any[]>((resolve, reject) => {
+    db.all(sql, ...params, (err: Error | null, rows: any[]) => {
+      if (err) reject(err);
+      else resolve(rows);
+    });
+  });
+};
+
+// Initialize database schema
+db.serialize(() => {
+  db.run(`
+    CREATE TABLE IF NOT EXISTS Data (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      Field TEXT UNIQUE NOT NULL,
+      Messagets TEXT,
+      Number INTEGER DEFAULT 0,
+      PubMes TEXT
+    )
+  `);
+});
 
 const register = (app: App) => {
   app.event('message', async ({ event, client, logger }) => {
     try {
       const msg = event as any;
       if (msg.text == "time to run and go sigma76973213245") {
-        const allRecords = await base('Data').select({}).all();
+        const allRecords = await dbAll('SELECT * FROM Data') as any[];
         const recordMap = Object.fromEntries(
-          allRecords.map(r => [r.fields["Field"], r])
+          allRecords.map(r => [r.Field, r])
         );
         await client.chat.postMessage({
           channel: msg.channel,
           text: `Yesterday: \n
-          New users joined: ${recordMap["New User"]?.fields["Number"] ?? 0}\n
-          New bots joined: ${recordMap["New Bot"]?.fields["Number"] ?? 0}\n
-          New workflows made: ${recordMap["New Workflow Bot"]?.fields["Number"] ?? 0}\n
-          Channels created: ${recordMap["Channel Created"]?.fields["Number"] ?? 0}\n
-          Channels archived: ${recordMap["Channel Archived"]?.fields["Number"] ?? 0}\n
-          Channels deleted: ${recordMap["Channel Deleted"]?.fields["Number"] ?? 0}\n
-          Channels unarchived: ${recordMap["Channel Unarchived"]?.fields["Number"] ?? 0}\n
-          Channels renamed: ${recordMap["Channel Renamed"]?.fields["Number"] ?? 0}\n
-          User groups added: ${recordMap["Subteam Added"]?.fields["Number"] ?? 0}\n
-          User groups edited: ${recordMap["Subteam Changed"]?.fields["Number"] ?? 0} with ${recordMap["Subteam Members Changed"]?.fields["Number"] ?? 0} of those edits being member changes\n
-          User groups deleted: ${recordMap["Subteam Deleted"]?.fields["Number"] ?? 0}\n
-          Emojis added: ${recordMap["Emoji Added"]?.fields["Number"] ?? 0}\n
-          Emoji alias added: ${recordMap["Emoji Alias Added"]?.fields["Number"] ?? 0}\n
-          Emojis changed: ${recordMap["Emoji Changed"]?.fields["Number"] ?? 0}\n
-          Emojis deleted: ${recordMap["Emoji Removed"]?.fields["Number"] ?? 0}\n
-          Number of times Do Not Disturb was turned on: ${recordMap["Dnd Set Active"]?.fields["Number"] ?? 0}\n
-          Number of times Do Not Disturb was turned off: ${recordMap["Dnd Set Inactive"]?.fields["Number"] ?? 0}\n
-          Number of times a huddle was joined: ${recordMap["Huddle Joined"]?.fields["Number"] ?? 0}\n
-          Number of times a huddle was left: ${recordMap["Huddle Left"]?.fields["Number"] ?? 0}\n
+          New users joined: ${recordMap["New User"]?.Number ?? 0}\n
+          New bots joined: ${recordMap["New Bot"]?.Number ?? 0}\n
+          New workflows made: ${recordMap["New Workflow Bot"]?.Number ?? 0}\n
+          Channels created: ${recordMap["Channel Created"]?.Number ?? 0}\n
+          Channels archived: ${recordMap["Channel Archived"]?.Number ?? 0}\n
+          Channels deleted: ${recordMap["Channel Deleted"]?.Number ?? 0}\n
+          Channels unarchived: ${recordMap["Channel Unarchived"]?.Number ?? 0}\n
+          Channels renamed: ${recordMap["Channel Renamed"]?.Number ?? 0}\n
+          User groups added: ${recordMap["Subteam Added"]?.Number ?? 0}\n
+          User groups edited: ${recordMap["Subteam Changed"]?.Number ?? 0} with ${recordMap["Subteam Members Changed"]?.Number ?? 0} of those edits being member changes\n
+          User groups deleted: ${recordMap["Subteam Deleted"]?.Number ?? 0}\n
+          Emojis added: ${recordMap["Emoji Added"]?.Number ?? 0}\n
+          Emoji alias added: ${recordMap["Emoji Alias Added"]?.Number ?? 0}\n
+          Emojis changed: ${recordMap["Emoji Changed"]?.Number ?? 0}\n
+          Emojis deleted: ${recordMap["Emoji Removed"]?.Number ?? 0}\n
+          Number of times Do Not Disturb was turned on: ${recordMap["Dnd Set Active"]?.Number ?? 0}\n
+          Number of times Do Not Disturb was turned off: ${recordMap["Dnd Set Inactive"]?.Number ?? 0}\n
+          Number of times a huddle was joined: ${recordMap["Huddle Joined"]?.Number ?? 0}\n
+          Number of times a huddle was left: ${recordMap["Huddle Left"]?.Number ?? 0}\n
           `,
         });
         await client.chat.postMessage({
           channel: "C09UH2LCP1Q",
           text: `Yesterday: \n
-          New users joined: ${recordMap["New User"]?.fields["Number"] ?? 0}\n
-          New bots joined: ${recordMap["New Bot"]?.fields["Number"] ?? 0}\n
-          New workflows made: ${recordMap["New Workflow Bot"]?.fields["Number"] ?? 0}\n
-          Channels created: ${recordMap["Channel Created"]?.fields["Number"] ?? 0}\n
-          Channels archived: ${recordMap["Channel Archived"]?.fields["Number"] ?? 0}\n
-          Channels deleted: ${recordMap["Channel Deleted"]?.fields["Number"] ?? 0}\n
-          Channels unarchived: ${recordMap["Channel Unarchived"]?.fields["Number"] ?? 0}\n
-          Channels renamed: ${recordMap["Channel Renamed"]?.fields["Number"] ?? 0}\n
-          User groups added: ${recordMap["Subteam Added"]?.fields["Number"] ?? 0}\n
-          User groups edited: ${recordMap["Subteam Changed"]?.fields["Number"] ?? 0} with ${recordMap["Subteam Members Changed"]?.fields["Number"] ?? 0} of those edits being member changes\n
-          User groups deleted: ${recordMap["Subteam Deleted"]?.fields["Number"] ?? 0}\n
-          Emojis added: ${recordMap["Emoji Added"]?.fields["Number"] ?? 0}\n
-          Emoji alias added: ${recordMap["Emoji Alias Added"]?.fields["Number"] ?? 0}\n
-          Emojis changed: ${recordMap["Emoji Changed"]?.fields["Number"] ?? 0}\n
-          Emojis deleted: ${recordMap["Emoji Removed"]?.fields["Number"] ?? 0}\n
-          Number of times Do Not Disturb was turned on: ${recordMap["Dnd Set Active"]?.fields["Number"] ?? 0}\n
-          Number of times Do Not Disturb was turned off: ${recordMap["Dnd Set Inactive"]?.fields["Number"] ?? 0}\n
-          Number of times a huddle was joined: ${recordMap["Huddle Joined"]?.fields["Number"] ?? 0}\n
-          Number of times a huddle was left: ${recordMap["Huddle Left"]?.fields["Number"] ?? 0}\n
+          New users joined: ${recordMap["New User"]?.Number ?? 0}\n
+          New bots joined: ${recordMap["New Bot"]?.Number ?? 0}\n
+          New workflows made: ${recordMap["New Workflow Bot"]?.Number ?? 0}\n
+          Channels created: ${recordMap["Channel Created"]?.Number ?? 0}\n
+          Channels archived: ${recordMap["Channel Archived"]?.Number ?? 0}\n
+          Channels deleted: ${recordMap["Channel Deleted"]?.Number ?? 0}\n
+          Channels unarchived: ${recordMap["Channel Unarchived"]?.Number ?? 0}\n
+          Channels renamed: ${recordMap["Channel Renamed"]?.Number ?? 0}\n
+          User groups added: ${recordMap["Subteam Added"]?.Number ?? 0}\n
+          User groups edited: ${recordMap["Subteam Changed"]?.Number ?? 0} with ${recordMap["Subteam Members Changed"]?.Number ?? 0} of those edits being member changes\n
+          User groups deleted: ${recordMap["Subteam Deleted"]?.Number ?? 0}\n
+          Emojis added: ${recordMap["Emoji Added"]?.Number ?? 0}\n
+          Emoji alias added: ${recordMap["Emoji Alias Added"]?.Number ?? 0}\n
+          Emojis changed: ${recordMap["Emoji Changed"]?.Number ?? 0}\n
+          Emojis deleted: ${recordMap["Emoji Removed"]?.Number ?? 0}\n
+          Number of times Do Not Disturb was turned on: ${recordMap["Dnd Set Active"]?.Number ?? 0}\n
+          Number of times Do Not Disturb was turned off: ${recordMap["Dnd Set Inactive"]?.Number ?? 0}\n
+          Number of times a huddle was joined: ${recordMap["Huddle Joined"]?.Number ?? 0}\n
+          Number of times a huddle was left: ${recordMap["Huddle Left"]?.Number ?? 0}\n
           `,
         });
         const rep1 = await client.chat.postMessage({
@@ -333,126 +378,14 @@ const register = (app: App) => {
             }
           }
         ];
-        const records = await base('Data').select({
-          maxRecords: 1,
-          filterByFormula: `{Field} = "New User"`
-        }).firstPage();
-        const recordId = records[0].id;
-        await base('Data').update([{ id: recordId, fields: airtablePayload[0].fields }]);
-        const records2 = await base('Data').select({
-          maxRecords: 1,
-          filterByFormula: `{Field} = "New Bot"`
-        }).firstPage();
-        const recordId2 = records2[0].id;
-        await base('Data').update([{ id: recordId2, fields: airtablePayload[1].fields }]);
-        const records3 = await base('Data').select({
-          maxRecords: 1,
-          filterByFormula: `{Field} = "New Workflow Bot"`
-        }).firstPage();
-        const recordId3 = records3[0].id;
-        await base('Data').update([{ id: recordId3, fields: airtablePayload[2].fields }]);
-        const records4 = await base('Data').select({
-          maxRecords: 1,
-          filterByFormula: `{Field} = "Channel Created"`
-        }).firstPage();
-        const recordId4 = records4[0].id;
-        await base('Data').update([{ id: recordId4, fields: airtablePayload[3].fields }]);
-        const records5 = await base('Data').select({
-          maxRecords: 1,
-          filterByFormula: `{Field} = "Channel Archived"`
-        }).firstPage();
-        const recordId5 = records5[0].id;
-        await base('Data').update([{ id: recordId5, fields: airtablePayload[4].fields }]);
-        const records6 = await base('Data').select({
-          maxRecords: 1,
-          filterByFormula: `{Field} = "Channel Deleted"`
-        }).firstPage();
-        const recordId6 = records6[0].id;
-        await base('Data').update([{ id: recordId6, fields: airtablePayload[5].fields }]);
-        const records7 = await base('Data').select({
-          maxRecords: 1,
-          filterByFormula: `{Field} = "Channel Unarchived"`
-        }).firstPage();
-        const recordId7 = records7[0].id;
-        await base('Data').update([{ id: recordId7, fields: airtablePayload[6].fields }]);
-        const records8 = await base('Data').select({
-          maxRecords: 1,
-          filterByFormula: `{Field} = "Channel Renamed"`
-        }).firstPage();
-        const recordId8 = records8[0].id;
-        await base('Data').update([{ id: recordId8, fields: airtablePayload[7].fields }]);
-        const records9 = await base('Data').select({
-          maxRecords: 1,
-          filterByFormula: `{Field} = "Subteam Added"`
-        }).firstPage();
-        const recordId9 = records9[0].id;
-        await base('Data').update([{ id: recordId9, fields: airtablePayload[8].fields }]);
-        const records10 = await base('Data').select({
-          maxRecords: 1,
-          filterByFormula: `{Field} = "Subteam Members Changed"`
-        }).firstPage();
-        const recordId10 = records10[0].id;
-        await base('Data').update([{ id: recordId10, fields: airtablePayload[9].fields }]);
-        const records11 = await base('Data').select({
-          maxRecords: 1,
-          filterByFormula: `{Field} = "Subteam Changed"`
-        }).firstPage();
-        const recordId11 = records11[0].id;
-        await base('Data').update([{ id: recordId11, fields: airtablePayload[10].fields }]);
-        const records12 = await base('Data').select({
-          maxRecords: 1,
-          filterByFormula: `{Field} = "Subteam Deleted"`
-        }).firstPage();
-        const recordId12 = records12[0].id;
-        await base('Data').update([{ id: recordId12, fields: airtablePayload[11].fields }]);
-        const records13 = await base('Data').select({
-          maxRecords: 1,
-          filterByFormula: `{Field} = "Emoji Added"`
-        }).firstPage();
-        const recordId13 = records13[0].id;
-        await base('Data').update([{ id: recordId13, fields: airtablePayload[12].fields }]);
-        const records14 = await base('Data').select({
-          maxRecords: 1,
-          filterByFormula: `{Field} = "Emoji Changed"`
-        }).firstPage();
-        const recordId14 = records14[0].id;
-        await base('Data').update([{ id: recordId14, fields: airtablePayload[13].fields }]);
-        const records15 = await base('Data').select({
-          maxRecords: 1,
-          filterByFormula: `{Field} = "Emoji Removed"`
-        }).firstPage();
-        const recordId15 = records15[0].id;
-        await base('Data').update([{ id: recordId15, fields: airtablePayload[14].fields }]);
-        const records16 = await base('Data').select({
-          maxRecords: 1,
-          filterByFormula: `{Field} = "Dnd Set Active"`
-        }).firstPage();
-        const recordId16 = records16[0].id;
-        await base('Data').update([{ id: recordId16, fields: airtablePayload[15].fields }]);
-        const records17 = await base('Data').select({
-          maxRecords: 1,
-          filterByFormula: `{Field} = "Dnd Set Inactive"`
-        }).firstPage();
-        const recordId17 = records17[0].id;
-        await base('Data').update([{ id: recordId17, fields: airtablePayload[16].fields }]);
-        const records18 = await base('Data').select({
-          maxRecords: 1,
-          filterByFormula: `{Field} = "Emoji Alias Added"`
-        }).firstPage();
-        const recordId18 = records18[0].id;
-        await base('Data').update([{ id: recordId18, fields: airtablePayload[17].fields }]);
-        const records19 = await base('Data').select({
-          maxRecords: 1,
-          filterByFormula: `{Field} = "Huddle Joined"`
-        }).firstPage();
-        const recordId19 = records19[0].id;
-        await base('Data').update([{ id: recordId19, fields: airtablePayload[18].fields }]);
-        const records20 = await base('Data').select({
-          maxRecords: 1,
-          filterByFormula: `{Field} = "Huddle Left"`
-        }).firstPage();
-        const recordId20 = records20[0].id;
-        await base('Data').update([{ id: recordId20, fields: airtablePayload[19].fields }]);
+        for (const payload of airtablePayload) {
+          await dbRun(
+            'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
+            payload.fields.Messagets,
+            payload.fields.Number,
+            payload.fields.Field
+          );
+        }
       }
     } catch (error) {
       logger.error('Error handling message event', error);
@@ -464,19 +397,15 @@ const register = (app: App) => {
       logger.info(event.user);
       if (event.user.is_workflow_bot) {
         const formula = `{Field} = "New Workflow Bot"`;
-        const ts = await base("Data").select({
-          maxRecords: 10,
-          filterByFormula: formula,
-          fields: ['Field', 'Messagets', 'Number', 'PubMes'] 
-        }).firstPage();
-        const messagets = ts[0].fields.Messagets as string | undefined;
-        let num = Number(ts[0].fields.Number ?? 0);
+        const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'New Workflow Bot') as any;
+        const messagets = ts?.Messagets as string | undefined;
+        let num = Number(ts?.Number ?? 0);
         const rep1 = await client.chat.postMessage({
           channel: "C09TXAZ8GAG",
           text: `<@${event.user.id}> the workflow bot has joined! Join type: ${event.type}`,
           thread_ts: messagets,
         });
-        const pubmes = ts[0].fields.PubMes as string | undefined;
+        const pubmes = ts?.PubMes as string | undefined;
         await client.chat.postMessage({
           channel: "C09UH2LCP1Q",
           text: `<@${event.user.id}> the workflow bot has joined! Join type: ${event.type}`,
@@ -486,32 +415,23 @@ const register = (app: App) => {
           channel: "C09UH2LCP1Q",
           text: `<@${event.user.id}> the workflow bot has joined! Join type: ${event.type}`,
         });
-        const airtablePayload = [
-          {
-            fields: { 
-              "Field": "New Workflow Bot", 
-              "Messagets": rep1.ts,
-              "Number": (num + 1)
-            }
-          }
-        ];
-        const result = await base('Data').update([{ id: ts[0].id, fields: airtablePayload[0].fields }]);
-        logger.info(result);
+        await dbRun(
+          'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
+          rep1.ts,
+          num + 1,
+          'New Workflow Bot'
+        );
+        logger.info('Updated New Workflow Bot record');
       } else if (event.user.is_bot) {
-        const formula = `{Field} = "New Bot"`;
-        const ts = await base("Data").select({
-          maxRecords: 10,
-          filterByFormula: formula,
-          fields: ['Field', 'Messagets', 'Number', 'PubMes']
-        }).firstPage();
-        const messagets = ts[0].fields.Messagets as string | undefined;
-        let num = Number(ts[0].fields.Number ?? 0);
+        const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'New Bot') as any;
+        const messagets = ts?.Messagets as string | undefined;
+        let num = Number(ts?.Number ?? 0);
         const rep1 = await client.chat.postMessage({
           channel: "C09TXAZ8GAG",
           text: `<@${event.user.id}> the app has joined! Join type: ${event.type}`,
           thread_ts: messagets,
         });
-        const pubmes = ts[0].fields.PubMes as string | undefined;
+        const pubmes = ts?.PubMes as string | undefined;
         await client.chat.postMessage({
           channel: "C09UH2LCP1Q",
           text: `<@${event.user.id}> the app has joined! Join type: ${event.type}`,
@@ -521,26 +441,17 @@ const register = (app: App) => {
           channel: "C09UH2LCP1Q",
           text: `<@${event.user.id}> the app has joined! Join type: ${event.type}`,
         });
-        const airtablePayload = [
-          {
-            fields: { 
-              "Field": "New Bot", 
-              "Messagets": rep1.ts,
-              "Number": (num + 1)
-            }
-          }
-        ];
-        const result = await base('Data').update([{ id: ts[0].id, fields: airtablePayload[0].fields }]);
-        logger.info(result);
+        await dbRun(
+          'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
+          rep1.ts,
+          num + 1,
+          'New Bot'
+        );
+        logger.info('Updated New Bot record');
       } else {
-        const formula = `{Field} = "New User"`;
-        const ts = await base("Data").select({
-          maxRecords: 10,
-          filterByFormula: formula,
-          fields: ['Field', 'Messagets', 'Number'] 
-        }).firstPage();
-        const messagets = ts[0].fields.Messagets as string | undefined;
-        let num = Number(ts[0].fields.Number ?? 0);
+        const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'New User') as any;
+        const messagets = ts?.Messagets as string | undefined;
+        let num = Number(ts?.Number ?? 0);
         const rep1 = await client.chat.postMessage({
           channel: "C09TXAZ8GAG",
           text: `<@${event.user.id}> has joined! Details:\n
@@ -556,17 +467,13 @@ const register = (app: App) => {
           Invited: ${event.user.is_invited_user}\n`, 
           thread_ts: messagets,
         });
-        const airtablePayload = [
-          {
-            fields: { 
-              "Field": "New User", 
-              "Messagets": rep1.ts,
-              "Number": (num + 1)
-            }
-          }
-        ];
-        const result = await base('Data').update([{ id: ts[0].id, fields: airtablePayload[0].fields }]);
-        logger.info(result);
+        await dbRun(
+          'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
+          rep1.ts,
+          num + 1,
+          'New User'
+        );
+        logger.info('Updated New User record');
       }
     } catch (error) {
       logger.error('Error handling message event', error);
@@ -575,20 +482,15 @@ const register = (app: App) => {
 
   app.event('channel_created', async ({ event, client, logger }) => {
     try {
-      const formula = `{Field} = "Channel Created"`;
-      const ts = await base("Data").select({
-        maxRecords: 10,
-        filterByFormula: formula,
-        fields: ['Field', 'Messagets', 'Number', 'PubMes'] 
-      }).firstPage();
-      const messagets = ts[0].fields.Messagets as string | undefined;
-      let num = Number(ts[0].fields.Number ?? 0);
+      const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Channel Created') as any;
+      const messagets = ts?.Messagets as string | undefined;
+      let num = Number(ts?.Number ?? 0);
       const rep1 = await client.chat.postMessage({
         channel: "C09TXAZ8GAG",
         text: `<#${event.channel.id}> (${event.channel.name}) by <@${event.channel.creator}> has been created.`,
         thread_ts: messagets,
       });
-      const pubmes = ts[0].fields.PubMes as string | undefined;
+      const pubmes = ts?.PubMes as string | undefined;
       await client.chat.postMessage({
         channel: "C09UH2LCP1Q",
         text: `<#${event.channel.id}> (${event.channel.name}) by <@${event.channel.creator}> has been created.`,
@@ -598,17 +500,13 @@ const register = (app: App) => {
         channel: "C09UH2LCP1Q",
         text: `<#${event.channel.id}> (${event.channel.name}) by <@${event.channel.creator}> has been created.`,
       });
-      const airtablePayload = [
-        {
-          fields: { 
-            "Field": "Channel Created", 
-            "Messagets": rep1.ts,
-            "Number": (num + 1)
-          }
-        }
-      ];
-      const result = await base('Data').update([{ id: ts[0].id, fields: airtablePayload[0].fields }]);
-      logger.info(result);
+      await dbRun(
+        'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
+        rep1.ts,
+        num + 1,
+        'Channel Created'
+      );
+      logger.info('Updated Channel Created record');
     } catch (error) {
       logger.error('Error handling message event', error);
     }
@@ -616,20 +514,15 @@ const register = (app: App) => {
 
   app.event('channel_archive', async ({ event, client, logger }) => {
     try {
-      const formula = `{Field} = "Channel Archived"`;
-      const ts = await base("Data").select({
-        maxRecords: 10,
-        filterByFormula: formula,
-        fields: ['Field', 'Messagets', 'Number', 'PubMes']  
-      }).firstPage();
-      const messagets = ts[0].fields.Messagets as string | undefined;
-      let num = Number(ts[0].fields.Number ?? 0);
+      const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Channel Archived') as any;
+      const messagets = ts?.Messagets as string | undefined;
+      let num = Number(ts?.Number ?? 0);
       const rep1 = await client.chat.postMessage({
         channel: "C09TXAZ8GAG",
         text: `<#${event.channel}> was archived by <@${event.user}>.`,
         thread_ts: messagets,
       });
-      const pubmes = ts[0].fields.PubMes as string | undefined;
+      const pubmes = ts?.PubMes as string | undefined;
       await client.chat.postMessage({
         channel: "C09UH2LCP1Q",
         text: `<#${event.channel}> was archived by <@${event.user}>.`,
@@ -639,17 +532,13 @@ const register = (app: App) => {
         channel: "C09UH2LCP1Q",
         text: `<#${event.channel}> was archived by <@${event.user}>.`,
       });
-      const airtablePayload = [
-        {
-          fields: { 
-            "Field": "Channel Archived", 
-            "Messagets": rep1.ts,
-            "Number": (num + 1)
-          }
-        }
-      ];
-      const result = await base('Data').update([{ id: ts[0].id, fields: airtablePayload[0].fields }]);
-      logger.info(result);
+      await dbRun(
+        'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
+        rep1.ts,
+        num + 1,
+        'Channel Archived'
+      );
+      logger.info('Updated Channel Archived record');
     } catch (error) {
       logger.error('Error handling message event', error);
     }
@@ -657,20 +546,15 @@ const register = (app: App) => {
 
   app.event('channel_deleted', async ({ event, client, logger }) => {
     try {
-      const formula = `{Field} = "Channel Deleted"`;
-      const ts = await base("Data").select({
-        maxRecords: 10,
-        filterByFormula: formula,
-        fields: ['Field', 'Messagets', 'Number', 'PubMes'] 
-      }).firstPage();
-      const messagets = ts[0].fields.Messagets as string | undefined;
-      let num = Number(ts[0].fields.Number ?? 0);
+      const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Channel Deleted') as any;
+      const messagets = ts?.Messagets as string | undefined;
+      let num = Number(ts?.Number ?? 0);
       const rep1 = await client.chat.postMessage({
         channel: "C09TXAZ8GAG",
         text: `<#${event.channel}> was deleted.`,
         thread_ts: messagets,
       });
-      const pubmes = ts[0].fields.PubMes as string | undefined;
+      const pubmes = ts?.PubMes as string | undefined;
       await client.chat.postMessage({
         channel: "C09UH2LCP1Q",
         text: `<#${event.channel}> was deleted.`,
@@ -680,17 +564,13 @@ const register = (app: App) => {
         channel: "C09UH2LCP1Q",
         text: `<#${event.channel}> was deleted.`,
       });
-      const airtablePayload = [
-        {
-          fields: { 
-            "Field": "Channel Deleted", 
-            "Messagets": rep1.ts,
-            "Number": (num + 1)
-          }
-        }
-      ];
-      const result = await base('Data').update([{ id: ts[0].id, fields: airtablePayload[0].fields }]);
-      logger.info(result);
+      await dbRun(
+        'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
+        rep1.ts,
+        num + 1,
+        'Channel Deleted'
+      );
+      logger.info("Channel deleted logged");
     } catch (error) {
       logger.error('Error handling message event', error);
     }
@@ -698,20 +578,15 @@ const register = (app: App) => {
 
   app.event('channel_rename', async ({ event, client, logger }) => {
     try {
-      const formula = `{Field} = "Channel Renamed"`;
-      const ts = await base("Data").select({
-        maxRecords: 10,
-        filterByFormula: formula,
-        fields: ['Field', 'Messagets', 'Number', 'PubMes']  
-      }).firstPage();
-      const messagets = ts[0].fields.Messagets as string | undefined;
-      let num = Number(ts[0].fields.Number ?? 0);
+      const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Channel Renamed') as any;
+      const messagets = ts?.Messagets as string | undefined;
+      let num = Number(ts?.Number ?? 0);
       const rep1 = await client.chat.postMessage({
         channel: "C09TXAZ8GAG",
         text: `<#${event.channel.id}> (${event.channel.name}) was renamed.`,
         thread_ts: messagets,
       });
-      const pubmes = ts[0].fields.PubMes as string | undefined;
+      const pubmes = ts?.PubMes as string | undefined;
       await client.chat.postMessage({
         channel: "C09UH2LCP1Q",
         text: `<#${event.channel.id}> (${event.channel.name}) was renamed.`,
@@ -721,17 +596,13 @@ const register = (app: App) => {
         channel: "C09UH2LCP1Q",
         text: `<#${event.channel.id}> (${event.channel.name}) was renamed.`,
       });
-      const airtablePayload = [
-        {
-          fields: { 
-            "Field": "Channel Renamed", 
-            "Messagets": rep1.ts,
-            "Number": (num + 1)
-          }
-        }
-      ];
-      const result = await base('Data').update([{ id: ts[0].id, fields: airtablePayload[0].fields }]);
-      logger.info(result);
+      await dbRun(
+        'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
+        rep1.ts,
+        num + 1,
+        'Channel Renamed'
+      );
+      logger.info('Updated Channel Renamed record');
     } catch (error) {
       logger.error('Error handling message event', error);
     }
@@ -739,20 +610,15 @@ const register = (app: App) => {
 
   app.event('channel_unarchive', async ({ event, client, logger }) => {
     try {
-      const formula = `{Field} = "Channel Unarchived"`;
-      const ts = await base("Data").select({
-        maxRecords: 10,
-        filterByFormula: formula,
-        fields: ['Field', 'Messagets', 'Number', 'PubMes'] 
-      }).firstPage();
-      const messagets = ts[0].fields.Messagets as string | undefined;
-      let num = Number(ts[0].fields.Number ?? 0);
+      const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Channel Unarchived') as any;
+      const messagets = ts?.Messagets as string | undefined;
+      let num = Number(ts?.Number ?? 0);
       const rep1 = await client.chat.postMessage({
         channel: "C09TXAZ8GAG",
         text: `<#${event.channel}> was unarchived by <@${event.user}>.`,
         thread_ts: messagets,
       });
-      const pubmes = ts[0].fields.PubMes as string | undefined;
+      const pubmes = ts?.PubMes as string | undefined;
       await client.chat.postMessage({
         channel: "C09UH2LCP1Q",
         text: `<#${event.channel}> was unarchived by <@${event.user}>.`,
@@ -762,17 +628,13 @@ const register = (app: App) => {
         channel: "C09UH2LCP1Q",
         text: `<#${event.channel}> was unarchived by <@${event.user}>.`,
       });
-      const airtablePayload = [
-        {
-          fields: { 
-            "Field": "Channel Unarchived", 
-            "Messagets": rep1.ts,
-            "Number": (num + 1)
-          }
-        }
-      ];
-      const result = await base('Data').update([{ id: ts[0].id, fields: airtablePayload[0].fields }]);
-      logger.info(result);
+      await dbRun(
+        'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
+        rep1.ts,
+        num + 1,
+        'Channel Unarchived'
+      );
+      logger.info('Updated Channel Unarchived record');
     } catch (error) {
       logger.error('Error handling message event', error);
     }
@@ -780,12 +642,7 @@ const register = (app: App) => {
 
   app.event('subteam_created', async ({ event, client, logger }) => {
     try {
-      const formula = `{Field} = "Subteam Added"`;
-      const ts = await base("Data").select({
-        maxRecords: 10,
-        filterByFormula: formula,
-        fields: ['Field', 'Messagets', 'Number'] 
-      }).firstPage();
+      const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Subteam Added') as any;
       let usersarray = "none";
       if (event.subteam.users && event.subteam.users.length > 0) {
         usersarray = event.subteam.users.map(id => `<@${id}>`).join(', ');
@@ -795,8 +652,8 @@ const register = (app: App) => {
       if (event.subteam.prefs?.channels && event.subteam.prefs.channels.length > 0) {
         channelarray = event.subteam.prefs.channels.map(id => `<#${id}>`).join(', ');
       }
-      const messagets = ts[0].fields.Messagets as string | undefined;
-      let num = Number(ts[0].fields.Number ?? 0);
+      const messagets = ts?.Messagets as string | undefined;
+      let num = Number(ts?.Number ?? 0);
       const rep1 = await client.chat.postMessage({
         channel: "C09TXAZ8GAG",
         text: `<!subteam^${event.subteam.id}> (${event.subteam.handle}) was made by <@${event.subteam.created_by}>. Details: \n
@@ -809,17 +666,13 @@ const register = (app: App) => {
           `,
         thread_ts: messagets,
       });
-      const airtablePayload = [
-        {
-          fields: { 
-            "Field": "Subteam Added", 
-            "Messagets": rep1.ts,
-            "Number": (num + 1)
-          }
-        }
-      ];
-      const result = await base('Data').update([{ id: ts[0].id, fields: airtablePayload[0].fields }]);
-      logger.info(result);
+      await dbRun(
+        'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
+        rep1.ts,
+        num + 1,
+        'Subteam Added'
+      );
+      logger.info('Updated Subteam Added record');
     } catch (error) {
       logger.error('Error handling message event', error);
     }
@@ -827,12 +680,7 @@ const register = (app: App) => {
 
   app.event('subteam_members_changed', async ({ event, client, logger }) => {
     try {
-      const formula = `{Field} = "Subteam Members Changed"`;
-      const ts = await base("Data").select({
-        maxRecords: 10,
-        filterByFormula: formula,
-        fields: ['Field', 'Messagets', 'Number'] 
-      }).firstPage();
+      const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Subteam Members Changed') as any;
       let addarray = "none";
       if (event.added_users && event.added_users.length > 0) {
         addarray = event.added_users.map(id => `<@${id}>`).join(', ');
@@ -843,8 +691,8 @@ const register = (app: App) => {
         removedarray = event.removed_users.map(id => `<@${id}>`).join(', ');
       }
 
-      const messagets = ts[0].fields.Messagets as string | undefined;
-      let num = Number(ts[0].fields.Number ?? 0);
+      const messagets = ts?.Messagets as string | undefined;
+      let num = Number(ts?.Number ?? 0);
       const rep1 = await client.chat.postMessage({
         channel: "C09TXAZ8GAG",
         text: `<!subteam^${event.subteam_id}> change was a member one:\n
@@ -854,17 +702,13 @@ const register = (app: App) => {
         Deleted count: ${event.removed_users_count}\n`,
         thread_ts: messagets,
       });
-      const airtablePayload = [
-        {
-          fields: { 
-            "Field": "Subteam Members Changed", 
-            "Messagets": rep1.ts,
-            "Number": (num + 1)
-          }
-        }
-      ];
-      const result = await base('Data').update([{ id: ts[0].id, fields: airtablePayload[0].fields }]);
-      logger.info(result);
+      await dbRun(
+        'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
+        rep1.ts,
+        num + 1,
+        'Subteam Members Changed'
+      );
+      logger.info('Updated Subteam Members Changed record');
     } catch (error) {
       logger.error('Error handling message event', error);
     }
@@ -882,14 +726,9 @@ const register = (app: App) => {
         channelarray = event.subteam.prefs.channels.map(id => `<#${id}>`).join(', ');
       }
       if (event.subteam && 'deleted_by' in event.subteam && (event.subteam as any).deleted_by) {
-        const formula = `{Field} = "Subteam Deleted"`;
-        const ts = await base("Data").select({
-          maxRecords: 10,
-          filterByFormula: formula,
-          fields: ['Field', 'Messagets', 'Number'] 
-        }).firstPage();
-        const messagets = ts[0].fields.Messagets as string | undefined;
-        let num = Number(ts[0].fields.Number ?? 0);
+        const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Subteam Deleted') as any;
+        const messagets = ts?.Messagets as string | undefined;
+        let num = Number(ts?.Number ?? 0);
         const rep1 = await client.chat.postMessage({
           channel: "C09TXAZ8GAG",
           text: `<!subteam^${event.subteam.id}> was deleted by <@${event.subteam.deleted_by}>. Details:\n
@@ -904,26 +743,17 @@ const register = (app: App) => {
           Channel count: ${event.subteam.channel_count}`,
           thread_ts: messagets,
         });
-        const airtablePayload = [
-          {
-            fields: { 
-              "Field": "Subteam Deleted",
-              "Messagets": rep1.ts,
-              "Number": (num + 1)
-            }
-          }
-        ];
-        const result = await base('Data').update([{ id: ts[0].id, fields: airtablePayload[0].fields }]);
-        logger.info(result);
+        await dbRun(
+          'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
+          rep1.ts,
+          num + 1,
+          'Subteam Deleted'
+        );
+        logger.info('Updated Subteam Deleted record');
       } else {
-        const formula = `{Field} = "Subteam Changed"`;
-        const ts = await base("Data").select({
-          maxRecords: 10,
-          filterByFormula: formula,
-          fields: ['Field', 'Messagets', 'Number'] 
-        }).firstPage();
-        const messagets = ts[0].fields.Messagets as string | undefined;
-        let num = Number(ts[0].fields.Number ?? 0);
+        const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Subteam Changed') as any;
+        const messagets = ts?.Messagets as string | undefined;
+        let num = Number(ts?.Number ?? 0);
         const rep1 = await client.chat.postMessage({
           channel: "C09TXAZ8GAG",
           text: `<!subteam^${event.subteam.id}> was updated by <@${event.subteam.updated_by}>. Details:\n
@@ -937,17 +767,13 @@ const register = (app: App) => {
           Channel count: ${event.subteam.channel_count}`,
           thread_ts: messagets,
         });
-        const airtablePayload = [
-          {
-            fields: { 
-              "Field": "Subteam Changed", 
-              "Messagets": rep1.ts,
-              "Number": (num + 1)
-            }
-          }
-        ];
-        const result = await base('Data').update([{ id: ts[0].id, fields: airtablePayload[0].fields }]);
-        logger.info(result);
+        await dbRun(
+          'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
+          rep1.ts,
+          num + 1,
+          'Subteam Changed'
+        );
+        logger.info('Updated Subteam Changed record');
       }
     } catch (error) {
       logger.error('Error handling message event', error);
@@ -958,20 +784,15 @@ const register = (app: App) => {
     try {
       if (event.subtype == 'add') {
         if (event.value?.startsWith("alias")) {
-          const formula = `{Field} = "Emoji Alias Added"`;
-          const ts = await base("Data").select({
-            maxRecords: 10,
-            filterByFormula: formula,
-            fields: ['Field', 'Messagets', 'Number', 'PubMes'] 
-          }).firstPage();
-          const messagets = ts[0].fields.Messagets as string | undefined;
-          let num = Number(ts[0].fields.Number ?? 0);
+          const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Emoji Alias Added') as any;
+          const messagets = ts?.Messagets as string | undefined;
+          let num = Number(ts?.Number ?? 0);
           const rep1 = await client.chat.postMessage({
             channel: "C09TXAZ8GAG",
             text: `:${event.name}: was added (alias of :${event.value.split(":")[1]}:)!`,
             thread_ts: messagets,
           });
-          const pubmes = ts[0].fields.PubMes as string | undefined;
+          const pubmes = ts?.PubMes as string | undefined;
           await client.chat.postMessage({
             channel: "C09UH2LCP1Q",
             text: `:${event.name}: was added (alias of :${event.value.split(":")[1]}:)!`,
@@ -981,32 +802,23 @@ const register = (app: App) => {
             channel: "C09UH2LCP1Q",
             text: `:${event.name}: was added (alias of :${event.value.split(":")[1]}:)!`,
           });
-          const airtablePayload = [
-            {
-              fields: { 
-                "Field": "Emoji Alias Added",
-                "Messagets": rep1.ts,
-                "Number": (num + 1)
-              }
-            }
-          ];
-          const result = await base('Data').update([{ id: ts[0].id, fields: airtablePayload[0].fields }]);
-          logger.info(result);
+          await dbRun(
+            'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
+            rep1.ts,
+            num + 1,
+            'Emoji Alias Added'
+          );
+          logger.info('Updated Emoji Alias Added record');
         } else {
-          const formula = `{Field} = "Emoji Added"`;
-          const ts = await base("Data").select({
-            maxRecords: 10,
-            filterByFormula: formula,
-            fields: ['Field', 'Messagets', 'Number', 'PubMes']
-          }).firstPage();
-          const messagets = ts[0].fields.Messagets as string | undefined;
-          let num = Number(ts[0].fields.Number ?? 0);
+          const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Emoji Added') as any;
+          const messagets = ts?.Messagets as string | undefined;
+          let num = Number(ts?.Number ?? 0);
           const rep1 = await client.chat.postMessage({
             channel: "C09TXAZ8GAG",
             text: `:${event.name}: was added!`,
             thread_ts: messagets,
           });
-          const pubmes = ts[0].fields.PubMes as string | undefined;
+          const pubmes = ts?.PubMes as string | undefined;
           await client.chat.postMessage({
             channel: "C09UH2LCP1Q",
             text: `:${event.name}: was added!`,
@@ -1016,33 +828,24 @@ const register = (app: App) => {
             channel: "C09UH2LCP1Q",
             text: `:${event.name}: was added!`,
           });
-          const airtablePayload = [
-            {
-              fields: { 
-                "Field": "Emoji Added",
-                "Messagets": rep1.ts,
-                "Number": (num + 1)
-              }
-            }
-          ];
-          const result = await base('Data').update([{ id: ts[0].id, fields: airtablePayload[0].fields }]);
-          logger.info(result);
+          await dbRun(
+            'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
+            rep1.ts,
+            num + 1,
+            'Emoji Added'
+          );
+          logger.info('Updated Emoji Added record');
         }
       } else if (event.subtype == 'remove') {
-        const formula = `{Field} = "Emoji Removed"`;
-        const ts = await base("Data").select({
-          maxRecords: 10,
-          filterByFormula: formula,
-          fields: ['Field', 'Messagets', 'Number', 'PubMes'] 
-        }).firstPage();
-        const messagets = ts[0].fields.Messagets as string | undefined;
-        let num = Number(ts[0].fields.Number ?? 0);
+        const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Emoji Removed') as any;
+        const messagets = ts?.Messagets as string | undefined;
+        let num = Number(ts?.Number ?? 0);
         const rep1 = await client.chat.postMessage({
           channel: "C09TXAZ8GAG",
           text: `${event.names} was removed.`,
           thread_ts: messagets,
         });
-        const pubmes = ts[0].fields.PubMes as string | undefined;
+        const pubmes = ts?.PubMes as string | undefined;
         await client.chat.postMessage({
           channel: "C09UH2LCP1Q",
           text: `${event.names} was removed.`,
@@ -1052,27 +855,18 @@ const register = (app: App) => {
           channel: "C09UH2LCP1Q",
           text: `${event.names} was removed.`,
         });
-        const airtablePayload = [
-          {
-            fields: { 
-              "Field": "Emoji Removed",
-              "Messagets": rep1.ts,
-              "Number": (num + 1),
-            }
-          }
-        ];
-        const result = await base('Data').update([{ id: ts[0].id, fields: airtablePayload[0].fields }]);
-        logger.info(result);
+        await dbRun(
+          'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
+          rep1.ts,
+          num + 1,
+          'Emoji Removed'
+        );
+        logger.info('Updated Emoji Removed record');
       } else if (event.subtype == "rename") {
-        const formula = `{Field} = "Emoji Changed"`;
-        const ts = await base("Data").select({
-          maxRecords: 10,
-          filterByFormula: formula,
-          fields: ['Field', 'Messagets', 'Number', 'PubMes'] 
-        }).firstPage();
-        const messagets = ts[0].fields.Messagets as string | undefined;
-        let num = Number(ts[0].fields.Number ?? 0);
-        const pubmes = ts[0].fields.PubMes as string | undefined;
+        const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Emoji Changed') as any;
+        const messagets = ts?.Messagets as string | undefined;
+        let num = Number(ts?.Number ?? 0);
+        const pubmes = ts?.PubMes as string | undefined;
         const rep1 = await client.chat.postMessage({
           channel: "C09TXAZ8GAG",
           text: `${event.old_name} was renamed to ${event.new_name}.`,
@@ -1087,17 +881,13 @@ const register = (app: App) => {
             channel: "C09UH2LCP1Q",
             text: `${event.old_name} was renamed to ${event.new_name}.`,
           });
-        const airtablePayload = [
-          {
-            fields: { 
-              "Field": "Emoji Changed",
-              "Messagets": rep1.ts,
-              "Number": (num + 1)
-            }
-          }
-        ];
-        const result = await base('Data').update([{ id: ts[0].id, fields: airtablePayload[0].fields }]);
-        logger.info(result);
+        await dbRun(
+          'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
+          rep1.ts,
+          num + 1,
+          'Emoji Changed'
+        );
+        logger.info('Updated Emoji Changed record');
       }
       logger.info(event);
     } catch (error) {
@@ -1108,12 +898,7 @@ const register = (app: App) => {
   app.event('dnd_updated_user', async ({ event, client, logger }) => {
     try {
       if (event.dnd_status.dnd_enabled) {
-        const formula = `{Field} = "Dnd Set Active"`;
-        const ts = await base("Data").select({
-          maxRecords: 10,
-          filterByFormula: formula,
-          fields: ['Field', 'Messagets', 'Number'] 
-        }).firstPage();
+        const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Dnd Set Active') as any;
         const start = event.dnd_status.next_dnd_start_ts
           ? new Date(event.dnd_status.next_dnd_start_ts * 1000)
           : null;
@@ -1122,49 +907,36 @@ const register = (app: App) => {
           : null;
         const startStr = start ? start.toLocaleString() : 'unknown';
         const endStr = end ? end.toLocaleString() : 'unknown';
-        const messagets = ts[0].fields.Messagets as string | undefined;
-        let num = Number(ts[0].fields.Number ?? 0);
+        const messagets = ts?.Messagets as string | undefined;
+        let num = Number(ts?.Number ?? 0);
         const rep1 = await client.chat.postMessage({
           channel: "C09TXAZ8GAG",
           text: `<@${event.user}> has turned on their Do Not Disturb\nStarts: ${startStr}\nEnds: ${endStr}!`,
           thread_ts: messagets,
         });
-        const airtablePayload = [
-          {
-            fields: { 
-              "Field": "Dnd Set Active",
-              "Messagets": rep1.ts,
-              "Number": (num + 1)
-            }
-          }
-        ];
-        const result = await base('Data').update([{ id: ts[0].id, fields: airtablePayload[0].fields }]);
-        logger.info(result);
+        await dbRun(
+          'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
+          rep1.ts,
+          num + 1,
+          'Dnd Set Active'
+        );
+        logger.info('Updated Dnd Set Active record');
       } else if (event.dnd_status.dnd_enabled == false) {
-        const formula = `{Field} = "Dnd Set Inactive"`;
-        const ts = await base("Data").select({
-          maxRecords: 10,
-          filterByFormula: formula,
-          fields: ['Field', 'Messagets', 'Number'] 
-        }).firstPage();
-        const messagets = ts[0].fields.Messagets as string | undefined;
-        let num = Number(ts[0].fields.Number ?? 0);
+        const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Dnd Set Inactive') as any;
+        const messagets = ts?.Messagets as string | undefined;
+        let num = Number(ts?.Number ?? 0);
         const rep1 = await client.chat.postMessage({
           channel: "C09TXAZ8GAG",
           text: `<@${event.user}> has turned off their Do Not Disturb.`,
           thread_ts: messagets,
         });
-        const airtablePayload = [
-          {
-            fields: { 
-              "Field": "Dnd Set Inactive",
-              "Messagets": rep1.ts,
-              "Number": (num + 1)
-            }
-          }
-        ];
-        const result = await base('Data').update([{ id: ts[0].id, fields: airtablePayload[0].fields }]);
-        logger.info(result);
+        await dbRun(
+          'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
+          rep1.ts,
+          num + 1,
+          'Dnd Set Inactive'
+        );
+        logger.info('Updated Dnd Set Inactive record');
       }
     } catch (error) {
       logger.error('Error handling message event', error);
@@ -1174,57 +946,39 @@ const register = (app: App) => {
   app.event('user_huddle_changed', async ({ event, client, logger }) => {
     try {
       if (event.user.profile.huddle_state == "in_a_huddle") {
-        const formula = `{Field} = "Huddle Joined"`;
-        const ts = await base("Data").select({
-          maxRecords: 10,
-          filterByFormula: formula,
-          fields: ['Field', 'Messagets', 'Number'] 
-        }).firstPage();
+        const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Huddle Joined') as any;
         const callId = (event.user.profile as any).huddle_state_call_id;
         const callInfo = callId ? ` (call ID: \`${callId}\`)` : "";
-        const messagets = ts[0].fields.Messagets as string | undefined;
-        let num = Number(ts[0].fields.Number ?? 0);
+        const messagets = ts?.Messagets as string | undefined;
+        let num = Number(ts?.Number ?? 0);
         const rep1 = await client.chat.postMessage({
           channel: "C09TXAZ8GAG",
           text: `<@${event.user.id}> has joined a huddle ${callInfo}!`,
           thread_ts: messagets,
         });
-        const airtablePayload = [
-          {
-            fields: { 
-              "Field": "Huddle Joined",
-              "Messagets": rep1.ts,
-              "Number": (num + 1)
-            }
-          }
-        ];
-        const result = await base('Data').update([{ id: ts[0].id, fields: airtablePayload[0].fields }]);
-        logger.info(result);
+        await dbRun(
+          'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
+          rep1.ts,
+          num + 1,
+          'Huddle Joined'
+        );
+        logger.info('Updated Huddle Joined record');
       } else {
-        const formula = `{Field} = "Huddle Left"`;
-        const ts = await base("Data").select({
-          maxRecords: 10,
-          filterByFormula: formula,
-          fields: ['Field', 'Messagets', 'Number'] 
-        }).firstPage();
-        let num = Number(ts[0].fields.Number ?? 0);
-        const messagets = ts[0].fields.Messagets as string | undefined;
+        const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Huddle Left') as any;
+        let num = Number(ts?.Number ?? 0);
+        const messagets = ts?.Messagets as string | undefined;
         const rep1 = await client.chat.postMessage({
           channel: "C09TXAZ8GAG",
           text: `<@${event.user.id}> has left a huddle.`,
           thread_ts: messagets,
         });
-        const airtablePayload = [
-          {
-            fields: { 
-              "Field": "Huddle Left",
-              "Messagets": rep1.ts,
-              "Number": (num + 1)
-            }
-          }
-        ];
-        const result = await base('Data').update([{ id: ts[0].id, fields: airtablePayload[0].fields }]);
-        logger.info(result);
+        await dbRun(
+          'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
+          rep1.ts,
+          num + 1,
+          'Huddle Left'
+        );
+        logger.info('Updated Huddle Left record');
       }
     } catch (error) {
       logger.error('Error handling message event', error);
