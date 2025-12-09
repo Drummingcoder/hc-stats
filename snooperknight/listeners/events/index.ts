@@ -3,6 +3,10 @@ import type { App } from '@slack/bolt';
 import sqlite3 from 'sqlite3';
 import { existsSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const DB_PATH = process.env.DB_PATH || resolve(__dirname, '../../data/stats.db');
 
@@ -63,6 +67,42 @@ db.serialize(() => {
       console.error('Error creating table:', err);
     } else {
       console.log('Database table "Data" ready');
+      
+      // Seed initial records if they don't exist
+      const initialFields = [
+        'New User',
+        'New Bot',
+        'New Workflow Bot',
+        'Channel Created',
+        'Channel Archived',
+        'Channel Deleted',
+        'Channel Unarchived',
+        'Channel Renamed',
+        'Subteam Added',
+        'Subteam Members Changed',
+        'Subteam Changed',
+        'Subteam Deleted',
+        'Emoji Added',
+        'Emoji Changed',
+        'Emoji Removed',
+        'Emoji Alias Added',
+        'Dnd Set Active',
+        'Dnd Set Inactive',
+        'Huddle Joined',
+        'Huddle Left'
+      ];
+
+      const insertStmt = db.prepare('INSERT OR IGNORE INTO Data (Field, Number) VALUES (?, 0)');
+      initialFields.forEach(field => {
+        insertStmt.run(field, (err) => {
+          if (err) {
+            console.error(`Error seeding field "${field}":`, err);
+          }
+        });
+      });
+      insertStmt.finalize(() => {
+        console.log('Database seeding complete');
+      });
     }
   });
 });
