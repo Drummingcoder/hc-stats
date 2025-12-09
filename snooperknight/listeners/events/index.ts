@@ -2,10 +2,9 @@ import type { App } from '@slack/bolt';
 
 import sqlite3 from 'sqlite3';
 import { existsSync, mkdirSync } from 'node:fs';
-import { dirname } from 'node:path';
-import { promisify } from 'node:util';
+import { dirname, resolve } from 'node:path';
 
-const DB_PATH = process.env.DB_PATH || './data/stats.db';
+const DB_PATH = process.env.DB_PATH || resolve(__dirname, '../../data/stats.db');
 
 // Ensure directory exists
 const dbDir = dirname(DB_PATH);
@@ -13,7 +12,13 @@ if (!existsSync(dbDir)) {
   mkdirSync(dbDir, { recursive: true });
 }
 
-const db = new sqlite3.Database(DB_PATH);
+const db = new sqlite3.Database(DB_PATH, (err) => {
+  if (err) {
+    console.error('Error opening database:', err);
+  } else {
+    console.log(`Connected to SQLite database at ${DB_PATH}`);
+  }
+});
 
 // Promisify database methods
 const dbRun = (sql: string, ...params: any[]) => {
@@ -53,7 +58,13 @@ db.serialize(() => {
       Number INTEGER DEFAULT 0,
       PubMes TEXT
     )
-  `);
+  `, (err) => {
+    if (err) {
+      console.error('Error creating table:', err);
+    } else {
+      console.log('Database table "Data" ready');
+    }
+  });
 });
 
 const register = (app: App) => {
