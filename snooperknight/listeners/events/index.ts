@@ -431,9 +431,10 @@ const register = (app: App) => {
         ];
         for (const payload of airtablePayload) {
           await dbRun(
-            'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
+            'UPDATE Data SET Messagets = ?, Number = ?, PubMes = ? WHERE Field = ?',
             payload.fields.Messagets,
             payload.fields.Number,
+            payload.fields.PubMes,
             payload.fields.Field
           );
         }
