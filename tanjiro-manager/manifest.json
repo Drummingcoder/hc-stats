@@ -9,8 +9,8 @@
     "features": {
         "app_home": {
             "home_tab_enabled": false,
-            "messages_tab_enabled": false,
-            "messages_tab_read_only_enabled": false
+            "messages_tab_enabled": true,
+            "messages_tab_read_only_enabled": true
         },
         "bot_user": {
             "display_name": "Shadow Hello",
@@ -21,8 +21,18 @@
         "scopes": {
             "bot": [
                 "chat:write",
-                "channel:read",
-                "commands"
+                "groups:read",
+                "channels:write.invites", 
+                "groups:write.invites", 
+                "channels:manage", 
+                "groups:write", 
+                "im:write", 
+                "chat:write.public",
+                "datastore:read",
+                "datastore:write",
+                "channels:read",
+                "commands",
+                "users:read"
             ]
         }
     },

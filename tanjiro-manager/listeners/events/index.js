@@ -66,7 +66,7 @@ export const register = (app) => {
           type: "section",
           text: {
             type: "mrkdwn",
-            text: `Hey there! <@${inputs.user}> just left <#${inputs.channel}>!\n`,
+            text: `Hey there! <@${event.user}> just left <#${event.channel}>!\n`,
           }
         },
         {
@@ -86,7 +86,7 @@ export const register = (app) => {
                 "text": "Yes!"
               },
               "action_id": "yespost",
-              "value": JSON.stringify({ user: inputs.user, channel: inputs.channel }),
+              "value": JSON.stringify({ user: event.user, channel: event.channel }),
               "style": "primary"
             },
             {
@@ -95,7 +95,7 @@ export const register = (app) => {
                 "type": "plain_text",
                 "text": "No!"
               },
-              "action_id": "nodo",
+              "action_id": "noout",
               "style": "danger"
             }
           ]
