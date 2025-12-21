@@ -1,5 +1,5 @@
-import { sampleShortcutCallback } from './sample-shortcut.js';
+import { deather } from './deathby.js';
 
 export const register = (app) => {
-  // app.shortcut('sample_shortcut_id', sampleShortcutCallback);
+  //app.shortcut('deathai', deather);
 };

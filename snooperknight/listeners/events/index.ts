@@ -112,6 +112,26 @@ const register = (app: App) => {
     try {
       const msg = event as any;
       if (msg.text == "time to run and go sigma76973213245") {
+        // Get tomorrow's date in PST at midnight
+        const now = new Date();
+        const pstDate = new Date(now.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+        const utcDate = new Date(now.toLocaleString('en-US', { timeZone: 'UTC' }));
+        const pstOffset = pstDate.getTime() - utcDate.getTime();
+        
+        // Calculate tomorrow at midnight PST
+        const tomorrowMidnightPST = new Date(now.getTime() + pstOffset);
+        tomorrowMidnightPST.setDate(tomorrowMidnightPST.getDate() + 1);
+        tomorrowMidnightPST.setHours(0, 0, 0, 0);
+        
+        // Convert back to UTC timestamp for Slack
+        const nextdayTimestamp = Math.floor((tomorrowMidnightPST.getTime() - pstOffset) / 1000);
+        
+        const scheduleNewMessage = await client.chat.scheduleMessage({
+          channel: "C09TXAZ8GAG",
+          post_at: nextdayTimestamp,
+          text: "time to run and go sigma76973213245"
+        });
+        console.log(scheduleNewMessage);
         const allRecords = await dbAll('SELECT * FROM Data') as any[];
         const recordMap = Object.fromEntries(
           allRecords.map(r => [r.Field, r])

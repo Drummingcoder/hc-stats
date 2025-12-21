@@ -1,5 +1,5 @@
-import { sampleCommandCallback } from './sample-command.js';
+import { deathb } from './deathbyai.js';
 
 export const register = (app) => {
-  // app.command('/sample-command', sampleCommandCallback);
+  app.command('/deathbyai', deathb);
 };

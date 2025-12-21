@@ -15,7 +15,14 @@
         "bot_user": {
             "display_name": "Shadow Hello",
             "always_online": true
-        }
+        },
+        "slash_commands": [
+            {
+                "command": "/deathbyai",
+                "description": "Play a game of Death by AI!",
+                "should_escape": true
+            }
+        ]
     },
     "oauth_config": {
         "scopes": {
