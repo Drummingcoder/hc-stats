@@ -8,4 +8,5 @@ export const register = (app) => {
   app.command('/deathrespond', derespond);
   app.command('/playRPS', play);
   app.command('/playOmniRPS', playOmni);
+  app.command('/trackmyactivity', playOmni);
 };
