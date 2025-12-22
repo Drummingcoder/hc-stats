@@ -4,7 +4,7 @@
         "minor_version": 1
     },
     "display_information": {
-        "name": "tanjiro-dude"
+        "name": "Kit"
     },
     "features": {
         "app_home": {
@@ -20,6 +20,11 @@
             {
                 "command": "/deathbyai",
                 "description": "Play a game of Death by AI!",
+                "should_escape": true
+            },
+            {
+                "command": "/deathrespond",
+                "description": "Respond to a Death by AI game",
                 "should_escape": true
             }
         ]
@@ -39,7 +44,30 @@
                 "datastore:write",
                 "channels:read",
                 "commands",
-                "users:read"
+                "users:read",
+                "reactions:write",
+                "bookmarks:read", 
+                "bookmarks:write", 
+                "canvases:read", 
+                "canvases:write", 
+                "channels:write", 
+                "dnd:read",
+                "emoji:read", 
+                "links:read",
+                "lists:read", 
+                "lists:write", 
+                "pins:read", 
+                "pins:write", 
+                "reactions:read", 
+                "usergroups:read", 
+                "usergroups:write", 
+                "users.profile:read", 
+                "users:write",
+                "search:read.public"
+            ],
+            "user": [
+                "dnd:write",
+                "users.profile:write"
             ]
         }
     },
@@ -47,7 +75,9 @@
         "event_subscriptions": {
             "bot_events": [
                 "member_joined_channel",
-                "member_left_channel"
+                "member_left_channel",
+                "message.channels",
+                "message.groups"
             ]
         },
         "interactivity": {

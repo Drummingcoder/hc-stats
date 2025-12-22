@@ -1,5 +1,5 @@
-import { sampleMessageCallback } from './sample-message.js';
+import { addperson } from './deathadder.js';
 
 export const register = (app) => {
-  // app.message(/^(hi|hello|hey).*/, sampleMessageCallback);
+  app.message(/^(me|Me|I|i).*/, addperson);
 };
