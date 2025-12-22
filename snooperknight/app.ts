@@ -1,6 +1,7 @@
 import { App, LogLevel } from '@slack/bolt';
 import 'dotenv/config';
 import registerListeners from './listeners/index.ts';
+import http from 'http';
 
 const app = new App({
   token: process.env.SLACK_BOT_TOKEN,
@@ -12,10 +13,13 @@ const app = new App({
 registerListeners(app);
 
 (async () => {
-  try {
-    await app.start(process.env.PORT || 3000);
-    app.logger.info('Snooperknight app is running!');
-  } catch (error) {
-    app.logger.error('Unable to start App', error);
-  }
+  await app.start();
+  console.log('⚡️ Snooper knight is running in Socket Mode!');
+
+  // KOYEB HEALTH CHECK SERVER
+  // This satisfies Koyeb that the app is "Live"
+  http.createServer((req, res) => {
+    res.writeHead(200);
+    res.end('All systems go');
+  }).listen(process.env.PORT || 8000);
 })();
