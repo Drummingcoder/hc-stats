@@ -26,6 +26,11 @@
                 "command": "/deathrespond",
                 "description": "Respond to a Death by AI game",
                 "should_escape": true
+            },
+            {
+                "command": "/playRPS",
+                "description": "A regular game of Rock, Paper, Scissors",
+                "should_escape": true
             }
         ]
     },

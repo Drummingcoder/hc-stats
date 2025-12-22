@@ -1,4 +1,8 @@
+import { p1InputHandler, p2InputHandler } from './rps-actions.js';
+
 export const register = (app) => {
+  app.action('p1_input', p1InputHandler);
+  app.action('p2_input', p2InputHandler);
   app.action('yespost', async ({ ack, client, body, logger }) => {
     await ack();
     if (body.message && body.channel) {
