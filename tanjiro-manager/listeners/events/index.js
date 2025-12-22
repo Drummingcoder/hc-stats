@@ -1,4 +1,7 @@
+import { omnirespond } from './omnireply.js';
+
 export const register = (app) => {
+  app.event("message", omnirespond)
   app.event('member_joined_channel', async({ client, event, logger }) => {
     let invited = false;
     const rep1 = await client.users.info({

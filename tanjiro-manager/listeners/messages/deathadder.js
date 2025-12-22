@@ -2,6 +2,11 @@ import { db, dbRun, dbGet, dbAll } from '../commands/deathbyai.js';
 
 const addperson = async ({ message, client, say, logger }) => {
   try {
+    // Ignore bot messages
+    if (message.bot_id || message.subtype === 'bot_message') {
+      return;
+    }
+    
     const channelToPost = message.channel;
     const timestamp = message.thread_ts;
     const mess = message.ts;
