@@ -18,7 +18,7 @@ const sampleCommandCallback = async ({ ack, logger, client, command }: AllMiddle
     const recordMap = Object.fromEntries(
       allRecords.map(r => [r.Field, r])
     );
-    const priMessage = await client.chat.postMessage({
+    await client.chat.postMessage({
       channel: privChannel,
       text: `Yesterday: \n
       New users joined: ${recordMap["New User"]?.Number ?? 0}\n
@@ -42,13 +42,7 @@ const sampleCommandCallback = async ({ ack, logger, client, command }: AllMiddle
       Number of times a huddle was left: ${recordMap["Huddle Left"]?.Number ?? 0}\n
       `,
     });
-    if (priMessage.ts) {
-      await client.pins.add({
-        channel: privChannel,
-        timestamp: priMessage.ts,
-      });
-    }
-    const pubMessage = await client.chat.postMessage({
+    await client.chat.postMessage({
       channel: pubChannel,
       text: `Yesterday: \n
       New users joined: ${recordMap["New User"]?.Number ?? 0}\n
@@ -72,12 +66,6 @@ const sampleCommandCallback = async ({ ack, logger, client, command }: AllMiddle
       Number of times a huddle was left: ${recordMap["Huddle Left"]?.Number ?? 0}\n
       `,
     });
-    if (pubMessage.ts) {
-      await client.pins.add({
-        channel: pubChannel,
-        timestamp: pubMessage.ts,
-      });
-    }
     
     const rep1 = await client.chat.postMessage({
       channel: privChannel,

@@ -28,7 +28,7 @@ cron.schedule('0 * * * *', async () => {
   const recordMap = Object.fromEntries(
     allRecords.map(r => [r.Field, r])
   );
-  const priMessage = await app.client.chat.postMessage({
+  await app.client.chat.postMessage({
     channel: privChannel,
     text: `Yesterday: \n
     New users joined: ${recordMap["New User"]?.Number ?? 0}\n
@@ -52,13 +52,7 @@ cron.schedule('0 * * * *', async () => {
     Number of times a huddle was left: ${recordMap["Huddle Left"]?.Number ?? 0}\n
     `,
   });
-  if (priMessage.ts) {
-    await app.client.pins.add({
-      channel: privChannel,
-      timestamp: priMessage.ts,
-    });
-  }
-  const pubMessage = await app.client.chat.postMessage({
+  await app.client.chat.postMessage({
     channel: pubChannel,
     text: `Yesterday: \n
     New users joined: ${recordMap["New User"]?.Number ?? 0}\n
@@ -82,12 +76,6 @@ cron.schedule('0 * * * *', async () => {
     Number of times a huddle was left: ${recordMap["Huddle Left"]?.Number ?? 0}\n
     `,
   });
-  if (pubMessage.ts) {
-    await app.client.pins.add({
-      channel: pubChannel,
-      timestamp: pubMessage.ts,
-    });
-  }
   
   const rep1 = await app.client.chat.postMessage({
     channel: privChannel,
