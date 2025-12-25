@@ -3,9 +3,14 @@ import events from '../events/index.ts';
 
 const { dbAll, dbRun } = events;
 
-const sampleCommandCallback = async ({ ack, logger, client }: AllMiddlewareArgs & SlackCommandMiddlewareArgs) => {
+const sampleCommandCallback = async ({ ack, logger, client, command }: AllMiddlewareArgs & SlackCommandMiddlewareArgs) => {
   try {
     await ack();
+
+    if (command.user_id != "U091EPSQ3E3") {
+      return;
+    }
+    
     const privChannel = 'C09TXAZ8GAG'; 
     const pubChannel = 'C09UH2LCP1Q';
 
