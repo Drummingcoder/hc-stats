@@ -3,6 +3,7 @@ import 'dotenv/config';
 import registerListeners from './listeners/index.ts';
 import http from 'http';
 import cron from 'node-cron';
+import { DateTime } from 'luxon';
 import events from './listeners/events/index.ts';
 
 const { dbAll, dbRun } = events;
@@ -14,7 +15,10 @@ const app = new App({
   logLevel: LogLevel.DEBUG,
 });
 
-cron.schedule('0 0 * * *', async () => {
+// Run every hour at minute 0, but only execute at midnight America/Los_Angeles (handles DST)
+cron.schedule('0 * * * *', async () => {
+  const now = DateTime.now().setZone('America/Los_Angeles');
+  if (now.hour !== 0) return;
   console.log('Running scheduled midnight report...');
   
   const privChannel = 'C09TXAZ8GAG'; 
@@ -80,7 +84,7 @@ cron.schedule('0 0 * * *', async () => {
   });
   if (pubMessage.ts) {
     await app.client.pins.add({
-      channel: privChannel,
+      channel: pubChannel,
       timestamp: pubMessage.ts,
     });
   }
