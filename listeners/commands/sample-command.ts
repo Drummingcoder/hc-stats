@@ -337,7 +337,7 @@ const sampleCommandCallback = async ({ ack, logger, client, command }: AllMiddle
         'UPDATE Data SET Messagets = ?, Number = ?, PubMes = ? WHERE Field = ?',
         payload.fields.Messagets,
         payload.fields.Number,
-        payload.fields.PubMes,
+        payload.fields.PubMes ?? null,
         payload.fields.Field
       );
     }

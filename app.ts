@@ -347,7 +347,7 @@ cron.schedule('0 * * * *', async () => {
       'UPDATE Data SET Messagets = ?, Number = ?, PubMes = ? WHERE Field = ?',
       payload.fields.Messagets,
       payload.fields.Number,
-      payload.fields.PubMes,
+      payload.fields.PubMes ?? null,
       payload.fields.Field
     );
   }
