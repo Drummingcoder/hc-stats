@@ -21,3 +21,5 @@ It's as easy as that!
 
 ## Video:
 Uh no video cuz this bot isn't something you can really use, but you can see it in action.
+
+This project uses the Slack Bolt SDK, which is licensed under the MIT License.

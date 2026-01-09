@@ -1,118 +1,93 @@
 import type { App } from '@slack/bolt';
 
-import sqlite3 from 'sqlite3';
-import { existsSync, mkdirSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { createClient } from "@libsql/client";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-const DB_PATH = process.env.DB_PATH || resolve(__dirname, '../../data/stats.db');
-
-// Ensure directory exists
-const dbDir = dirname(DB_PATH);
-if (!existsSync(dbDir)) {
-  mkdirSync(dbDir, { recursive: true });
-}
-
-const db = new sqlite3.Database(DB_PATH, (err) => {
-  if (err) {
-    console.error('Error opening database:', err);
-  } else {
-    console.log(`Connected to SQLite database at ${DB_PATH}`);
-  }
-});
+const turso = createClient({
+  url: process.env.TURSO_DATABASE_URL || "",
+  authToken: process.env.TURSO_AUTH_TOKEN || "",
+});;
 
 // Promisify database methods
-const dbRun = (sql: string, ...params: any[]) => {
-  return new Promise<void>((resolve, reject) => {
-    db.run(sql, ...params, function(err: Error | null) {
-      if (err) reject(err);
-      else resolve();
+const dbRun = async (sql: string, ...params: any[]) => {
+  try {
+    await turso.execute({
+      sql: sql,
+      args: params
     });
-  });
+  } catch (err) {
+    console.log(err);
+  }
 };
 
-const dbGet = (sql: string, ...params: any[]) => {
-  return new Promise<any>((resolve, reject) => {
-    db.get(sql, ...params, (err: Error | null, row: any) => {
-      if (err) reject(err);
-      else resolve(row);
+const dbGet = async (sql: string, ...params: any[]) => {
+  try {
+    const result = await turso.execute({
+      sql: sql,
+      args: params
     });
-  });
+
+    return result.rows[0];
+  } catch (err) {
+    console.log(err);
+  };
 };
 
-const dbAll = (sql: string, ...params: any[]) => {
-  return new Promise<any[]>((resolve, reject) => {
-    db.all(sql, ...params, (err: Error | null, rows: any[]) => {
-      if (err) reject(err);
-      else resolve(rows);
+const dbAll = async (sql: string, ...params: any[]) => {
+  try {
+    const result = await turso.execute({
+      sql: sql,
+      args: params
     });
-  });
+
+    return result.rows;
+  } catch (err) {
+    console.log(err);
+  };
 };
 
-// Initialize database schema
-db.serialize(() => {
-  db.run(`
+try {
+  // 1. Create the table
+  await turso.execute(`
     CREATE TABLE IF NOT EXISTS Data (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
+      date TEXT DEFAULT (strftime('%Y-%m-%d', 'now')),
       Field TEXT UNIQUE NOT NULL,
       Messagets TEXT,
       Number INTEGER DEFAULT 0,
       PubMes TEXT
     )
-  `, (err) => {
-    if (err) {
-      console.error('Error creating table:', err);
-    } else {
-      console.log('Database table "Data" ready');
-      
-      // Seed initial records if they don't exist
-      const initialFields = [
-        'New User',
-        'New Bot',
-        'New Workflow Bot',
-        'Channel Created',
-        'Channel Archived',
-        'Channel Deleted',
-        'Channel Unarchived',
-        'Channel Renamed',
-        'Subteam Added',
-        'Subteam Members Changed',
-        'Subteam Changed',
-        'Subteam Deleted',
-        'Emoji Added',
-        'Emoji Changed',
-        'Emoji Removed',
-        'Emoji Alias Added',
-        'Dnd Set Active',
-        'Dnd Set Inactive',
-        'Huddle Joined',
-        'Huddle Left'
-      ];
+  `);
+  console.log('Database table "Data" ready');
 
-      const insertStmt = db.prepare('INSERT OR IGNORE INTO Data (Field, Number) VALUES (?, 0)');
-      initialFields.forEach(field => {
-        insertStmt.run(field, (err) => {
-          if (err) {
-            console.error(`Error seeding field "${field}":`, err);
-          }
-        });
-      });
-      insertStmt.finalize(() => {
-        console.log('Database seeding complete');
-      });
-    }
-  });
-});
+  // 2. Define your initial fields
+  const initialFields = [
+    'New User', 'New Bot', 'New Workflow Bot', 'Channel Created',
+    'Channel Archived', 'Channel Deleted', 'Channel Unarchived',
+    'Channel Renamed', 'Subteam Added', 'Subteam Members Changed',
+    'Subteam Changed', 'Subteam Deleted', 'Emoji Added',
+    'Emoji Changed', 'Emoji Removed', 'Emoji Alias Added',
+    'Dnd Set Active', 'Dnd Set Inactive', 'Huddle Joined', 'Huddle Left'
+  ];
+
+  // 3. Use a Batch for Seeding
+  // This sends all inserts in one single network request
+  const statements = initialFields.map(field => ({
+    sql: 'INSERT OR IGNORE INTO Data (Field, Number) VALUES (?, 0)',
+    args: [field]
+  }));
+
+  await turso.batch(statements, "write");
+  console.log('Database seeding complete');
+
+} catch (err) {
+  console.error('Error during database initialization:', err);
+}
 
 const register = (app: App) => {
-  app.event('team_join', async ({ event, client, logger }) => {
+  app.event('team_join', async ({ event, client, logger }: { event: any, client: any, logger: any }) => {
     try {
       logger.info(event.user);
       if (event.user.is_workflow_bot) {
-        const formula = `{Field} = "New Workflow Bot"`;
         const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'New Workflow Bot') as any;
         const messagets = ts?.Messagets as string | undefined;
         let num = Number(ts?.Number ?? 0);
@@ -702,4 +677,4 @@ const register = (app: App) => {
   });
 };
 
-export default { register, db, dbRun, dbGet, dbAll };
+export default { register, turso, dbRun, dbGet, dbAll };
