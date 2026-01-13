@@ -686,6 +686,10 @@ const register = (app: App) => {
       const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'File Created') as any;
       const fileid = event.file.id;
       const fileInfo = await client.files.info({ file: fileid });
+      if (!fileInfo?.file) {
+        logger.warn('File info not available for file_created event');
+        return;
+      }
       const messagets = ts?.Messagets as string | undefined;
       let num = Number(ts?.Number ?? 0);
       const rep1 = await client.chat.postMessage({
@@ -718,6 +722,10 @@ const register = (app: App) => {
       const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'File Shared') as any;
       const fileid = event.file.id;
       const fileInfo = await client.files.info({ file: fileid });
+      if (!fileInfo?.file) {
+        logger.warn('File info not available for file_shared event');
+        return;
+      }
       const messagets = ts?.Messagets as string | undefined;
       let num = Number(ts?.Number ?? 0);
       const rep1 = await client.chat.postMessage({
@@ -745,11 +753,15 @@ const register = (app: App) => {
     }
   });
 
-  app.event('file_changed', async ({ event, client, logger }) => {
+  app.event('file_change', async ({ event, client, logger }) => {
     try {
       const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'File Changed') as any;
       const fileid = event.file.id;
       const fileInfo = await client.files.info({ file: fileid });
+      if (!fileInfo?.file) {
+        logger.warn('File info not available for file_change event');
+        return;
+      }
       const messagets = ts?.Messagets as string | undefined;
       let num = Number(ts?.Number ?? 0);
       const rep1 = await client.chat.postMessage({
@@ -780,7 +792,7 @@ const register = (app: App) => {
   app.event('file_deleted', async ({ event, client, logger }) => {
     try {
       const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'File Deleted') as any;
-      const fileid = event.file.id;
+      const fileid = event.file_id;
       const messagets = ts?.Messagets as string | undefined;
       let num = Number(ts?.Number ?? 0);
       const rep1 = await client.chat.postMessage({
@@ -805,6 +817,10 @@ const register = (app: App) => {
       const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'File Public') as any;
       const fileid = event.file.id;
       const fileInfo = await client.files.info({ file: fileid });
+      if (!fileInfo?.file) {
+        logger.warn('File info not available for file_public event');
+        return;
+      }
       const messagets = ts?.Messagets as string | undefined;
       let num = Number(ts?.Number ?? 0);
       const rep1 = await client.chat.postMessage({
@@ -837,6 +853,10 @@ const register = (app: App) => {
       const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'File Unshared') as any;
       const fileid = event.file.id;
       const fileInfo = await client.files.info({ file: fileid });
+      if (!fileInfo?.file) {
+        logger.warn('File info not available for file_unshared event');
+        return;
+      }
       const messagets = ts?.Messagets as string | undefined;
       let num = Number(ts?.Number ?? 0);
       const rep1 = await client.chat.postMessage({
