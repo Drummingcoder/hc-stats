@@ -685,7 +685,16 @@ const register = (app: App) => {
     try {
       const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'File Created') as any;
       const fileid = event.file.id;
-      const fileInfo = await client.files.info({ file: fileid });
+      let fileInfo;
+      try {
+        fileInfo = await client.files.info({ file: fileid });
+      } catch (fileError: any) {
+        if (fileError?.data?.error === 'file_not_found') {
+          logger.warn(`File ${fileid} not found for file_created event`);
+          return;
+        }
+        throw fileError;
+      }
       if (!fileInfo?.file) {
         logger.warn('File info not available for file_created event');
         return;
@@ -721,7 +730,16 @@ const register = (app: App) => {
     try {
       const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'File Shared') as any;
       const fileid = event.file.id;
-      const fileInfo = await client.files.info({ file: fileid });
+      let fileInfo;
+      try {
+        fileInfo = await client.files.info({ file: fileid });
+      } catch (fileError: any) {
+        if (fileError?.data?.error === 'file_not_found') {
+          logger.warn(`File ${fileid} not found for file_shared event`);
+          return;
+        }
+        throw fileError;
+      }
       if (!fileInfo?.file) {
         logger.warn('File info not available for file_shared event');
         return;
@@ -757,7 +775,16 @@ const register = (app: App) => {
     try {
       const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'File Changed') as any;
       const fileid = event.file.id;
-      const fileInfo = await client.files.info({ file: fileid });
+      let fileInfo;
+      try {
+        fileInfo = await client.files.info({ file: fileid });
+      } catch (fileError: any) {
+        if (fileError?.data?.error === 'file_not_found') {
+          logger.warn(`File ${fileid} not found for file_change event`);
+          return;
+        }
+        throw fileError;
+      }
       if (!fileInfo?.file) {
         logger.warn('File info not available for file_change event');
         return;
@@ -816,7 +843,16 @@ const register = (app: App) => {
     try {
       const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'File Public') as any;
       const fileid = event.file.id;
-      const fileInfo = await client.files.info({ file: fileid });
+      let fileInfo;
+      try {
+        fileInfo = await client.files.info({ file: fileid });
+      } catch (fileError: any) {
+        if (fileError?.data?.error === 'file_not_found') {
+          logger.warn(`File ${fileid} not found for file_public event`);
+          return;
+        }
+        throw fileError;
+      }
       if (!fileInfo?.file) {
         logger.warn('File info not available for file_public event');
         return;
@@ -852,7 +888,16 @@ const register = (app: App) => {
     try {
       const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'File Unshared') as any;
       const fileid = event.file.id;
-      const fileInfo = await client.files.info({ file: fileid });
+      let fileInfo;
+      try {
+        fileInfo = await client.files.info({ file: fileid });
+      } catch (fileError: any) {
+        if (fileError?.data?.error === 'file_not_found') {
+          logger.warn(`File ${fileid} not found for file_unshared event`);
+          return;
+        }
+        throw fileError;
+      }
       if (!fileInfo?.file) {
         logger.warn('File info not available for file_unshared event');
         return;
