@@ -53,7 +53,13 @@
                 "subteam_members_changed",
                 "team_join",
                 "user_huddle_changed",
-                "dnd_updated_user"
+                "dnd_updated_user",
+                "file_created",
+                "file_shared",
+                "file_changed",
+                "file_deleted",
+                "file_public",
+                "file_unshared"
             ]
         },
         "interactivity": {

@@ -33,7 +33,6 @@ cron.schedule('0 * * * *', async () => {
     text: `Yesterday: \n
     New users joined: ${recordMap["New User"]?.Number ?? 0}\n
     New bots joined: ${recordMap["New Bot"]?.Number ?? 0}\n
-    New workflows made: ${recordMap["New Workflow Bot"]?.Number ?? 0}\n
     Channels created: ${recordMap["Channel Created"]?.Number ?? 0}\n
     Channels archived: ${recordMap["Channel Archived"]?.Number ?? 0}\n
     Channels deleted: ${recordMap["Channel Deleted"]?.Number ?? 0}\n
@@ -50,6 +49,12 @@ cron.schedule('0 * * * *', async () => {
     Number of times Do Not Disturb was turned off: ${recordMap["Dnd Set Inactive"]?.Number ?? 0}\n
     Number of times a huddle was joined: ${recordMap["Huddle Joined"]?.Number ?? 0}\n
     Number of times a huddle was left: ${recordMap["Huddle Left"]?.Number ?? 0}\n
+    Files created: ${recordMap["File Created"]?.Number ?? 0}\n
+    Files shared: ${recordMap["File Shared"]?.Number ?? 0}\n
+    Files changed: ${recordMap["File Changed"]?.Number ?? 0}\n
+    Files deleted: ${recordMap["File Deleted"]?.Number ?? 0}\n
+    Files made public: ${recordMap["File Public"]?.Number ?? 0}\n
+    Files unshared: ${recordMap["File Unshared"]?.Number ?? 0}\n
     `,
   });
   await app.client.chat.postMessage({
@@ -57,7 +62,6 @@ cron.schedule('0 * * * *', async () => {
     text: `Yesterday: \n
     New users joined: ${recordMap["New User"]?.Number ?? 0}\n
     New bots joined: ${recordMap["New Bot"]?.Number ?? 0}\n
-    New workflows made: ${recordMap["New Workflow Bot"]?.Number ?? 0}\n
     Channels created: ${recordMap["Channel Created"]?.Number ?? 0}\n
     Channels archived: ${recordMap["Channel Archived"]?.Number ?? 0}\n
     Channels deleted: ${recordMap["Channel Deleted"]?.Number ?? 0}\n
@@ -74,6 +78,12 @@ cron.schedule('0 * * * *', async () => {
     Number of times Do Not Disturb was turned off: ${recordMap["Dnd Set Inactive"]?.Number ?? 0}\n
     Number of times a huddle was joined: ${recordMap["Huddle Joined"]?.Number ?? 0}\n
     Number of times a huddle was left: ${recordMap["Huddle Left"]?.Number ?? 0}\n
+    Files created: ${recordMap["File Created"]?.Number ?? 0}\n
+    Files shared: ${recordMap["File Shared"]?.Number ?? 0}\n
+    Files changed: ${recordMap["File Changed"]?.Number ?? 0}\n
+    Files deleted: ${recordMap["File Deleted"]?.Number ?? 0}\n
+    Files made public: ${recordMap["File Public"]?.Number ?? 0}\n
+    Files unshared: ${recordMap["File Unshared"]?.Number ?? 0}\n
     `,
   });
   
@@ -188,6 +198,30 @@ cron.schedule('0 * * * *', async () => {
   const rep18 = await app.client.chat.postMessage({
     channel: privChannel,
     text: `Huddle leavers: `,
+  });
+  const rep19 = await app.client.chat.postMessage({
+    channel: privChannel,
+    text: `Files created: `,
+  });
+  const rep20 = await app.client.chat.postMessage({
+    channel: privChannel,
+    text: `Files shared: `,
+  });
+  const rep21 = await app.client.chat.postMessage({
+    channel: privChannel,
+    text: `Files changed: `,
+  });
+  const rep22 = await app.client.chat.postMessage({
+    channel: privChannel,
+    text: `Files deleted: `,
+  });
+  const rep23 = await app.client.chat.postMessage({
+    channel: privChannel,
+    text: `Files made public: `,
+  });
+  const rep24 = await app.client.chat.postMessage({
+    channel: privChannel,
+    text: `Files unshared: `,
   });
   const airtablePayload = [
     {
@@ -338,6 +372,48 @@ cron.schedule('0 * * * *', async () => {
       fields: { 
         "Field": "Huddle Left", 
         "Messagets": rep18.ts,
+        "Number": 0
+      }
+    },
+    {
+      fields: { 
+        "Field": "File Created", 
+        "Messagets": rep19.ts,
+        "Number": 0
+      }
+    },
+    {
+      fields: { 
+        "Field": "File Shared", 
+        "Messagets": rep20.ts,
+        "Number": 0
+      }
+    },
+    {
+      fields: { 
+        "Field": "File Changed", 
+        "Messagets": rep21.ts,
+        "Number": 0
+      }
+    },
+    {
+      fields: { 
+        "Field": "File Deleted", 
+        "Messagets": rep22.ts,
+        "Number": 0
+      }
+    },
+    {
+      fields: { 
+        "Field": "File Public", 
+        "Messagets": rep23.ts,
+        "Number": 0
+      }
+    },
+    {
+      fields: { 
+        "Field": "File Unshared", 
+        "Messagets": rep24.ts,
         "Number": 0
       }
     }

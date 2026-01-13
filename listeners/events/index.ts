@@ -2,6 +2,9 @@ import type { App } from '@slack/bolt';
 
 import { createClient } from "@libsql/client";
 
+const privChannel = 'C09TXAZ8GAG'; 
+const pubChannel = 'C09UH2LCP1Q';
+
 const turso = createClient({
   url: process.env.TURSO_DATABASE_URL || "",
   authToken: process.env.TURSO_AUTH_TOKEN || "",
@@ -66,7 +69,9 @@ try {
     'Channel Renamed', 'Subteam Added', 'Subteam Members Changed',
     'Subteam Changed', 'Subteam Deleted', 'Emoji Added',
     'Emoji Changed', 'Emoji Removed', 'Emoji Alias Added',
-    'Dnd Set Active', 'Dnd Set Inactive', 'Huddle Joined', 'Huddle Left'
+    'Dnd Set Active', 'Dnd Set Inactive', 'Huddle Joined', 'Huddle Left', 
+    'File Created', 'File Shared', 'File Changed', 'File Deleted',
+    "File Public", "File Unshared"
   ];
 
   // 3. Use a Batch for Seeding
@@ -92,18 +97,18 @@ const register = (app: App) => {
         const messagets = ts?.Messagets as string | undefined;
         let num = Number(ts?.Number ?? 0);
         const rep1 = await client.chat.postMessage({
-          channel: "C09TXAZ8GAG",
+          channel: privChannel,
           text: `<@${event.user.id}> the workflow bot has joined! Join type: ${event.type}`,
           thread_ts: messagets,
         });
         const pubmes = ts?.PubMes as string | undefined;
         await client.chat.postMessage({
-          channel: "C09UH2LCP1Q",
+          channel: pubChannel,
           text: `<@${event.user.id}> the workflow bot has joined! Join type: ${event.type}`,
           thread_ts: pubmes,
         });
         await client.chat.postMessage({
-          channel: "C09UH2LCP1Q",
+          channel: pubChannel,
           text: `<@${event.user.id}> the workflow bot has joined! Join type: ${event.type}`,
         });
         await dbRun(
@@ -118,18 +123,18 @@ const register = (app: App) => {
         const messagets = ts?.Messagets as string | undefined;
         let num = Number(ts?.Number ?? 0);
         const rep1 = await client.chat.postMessage({
-          channel: "C09TXAZ8GAG",
+          channel: privChannel,
           text: `<@${event.user.id}> the app has joined! Join type: ${event.type}`,
           thread_ts: messagets,
         });
         const pubmes = ts?.PubMes as string | undefined;
         await client.chat.postMessage({
-          channel: "C09UH2LCP1Q",
+          channel: pubChannel,
           text: `<@${event.user.id}> the app has joined! Join type: ${event.type}`,
           thread_ts: pubmes,
         });
         await client.chat.postMessage({
-          channel: "C09UH2LCP1Q",
+          channel: pubChannel,
           text: `<@${event.user.id}> the app has joined! Join type: ${event.type}`,
         });
         await dbRun(
@@ -144,7 +149,7 @@ const register = (app: App) => {
         const messagets = ts?.Messagets as string | undefined;
         let num = Number(ts?.Number ?? 0);
         const rep1 = await client.chat.postMessage({
-          channel: "C09TXAZ8GAG",
+          channel: privChannel,
           text: `<@${event.user.id}> has joined! Details:\n
           Join type: ${event.type}\n
           Display name: ${event.user.name}\n
@@ -177,18 +182,18 @@ const register = (app: App) => {
       const messagets = ts?.Messagets as string | undefined;
       let num = Number(ts?.Number ?? 0);
       const rep1 = await client.chat.postMessage({
-        channel: "C09TXAZ8GAG",
+        channel: privChannel,
         text: `<#${event.channel.id}> (${event.channel.name}) by <@${event.channel.creator}> has been created.`,
         thread_ts: messagets,
       });
       const pubmes = ts?.PubMes as string | undefined;
       await client.chat.postMessage({
-        channel: "C09UH2LCP1Q",
+        channel: pubChannel,
         text: `<#${event.channel.id}> (${event.channel.name}) by <@${event.channel.creator}> has been created.`,
         thread_ts: pubmes,
       });
       await client.chat.postMessage({
-        channel: "C09UH2LCP1Q",
+        channel: pubChannel,
         text: `<#${event.channel.id}> (${event.channel.name}) by <@${event.channel.creator}> has been created.`,
       });
       await dbRun(
@@ -209,18 +214,18 @@ const register = (app: App) => {
       const messagets = ts?.Messagets as string | undefined;
       let num = Number(ts?.Number ?? 0);
       const rep1 = await client.chat.postMessage({
-        channel: "C09TXAZ8GAG",
+        channel: privChannel,
         text: `<#${event.channel}> was archived by <@${event.user}>.`,
         thread_ts: messagets,
       });
       const pubmes = ts?.PubMes as string | undefined;
       await client.chat.postMessage({
-        channel: "C09UH2LCP1Q",
+        channel: pubChannel,
         text: `<#${event.channel}> was archived by <@${event.user}>.`,
         thread_ts: pubmes,
       });
       await client.chat.postMessage({
-        channel: "C09UH2LCP1Q",
+        channel: pubChannel,
         text: `<#${event.channel}> was archived by <@${event.user}>.`,
       });
       await dbRun(
@@ -241,18 +246,18 @@ const register = (app: App) => {
       const messagets = ts?.Messagets as string | undefined;
       let num = Number(ts?.Number ?? 0);
       const rep1 = await client.chat.postMessage({
-        channel: "C09TXAZ8GAG",
+        channel: privChannel,
         text: `<#${event.channel}> was deleted.`,
         thread_ts: messagets,
       });
       const pubmes = ts?.PubMes as string | undefined;
       await client.chat.postMessage({
-        channel: "C09UH2LCP1Q",
+        channel: pubChannel,
         text: `<#${event.channel}> was deleted.`,
         thread_ts: pubmes,
       });
       await client.chat.postMessage({
-        channel: "C09UH2LCP1Q",
+        channel: pubChannel,
         text: `<#${event.channel}> was deleted.`,
       });
       await dbRun(
@@ -273,18 +278,18 @@ const register = (app: App) => {
       const messagets = ts?.Messagets as string | undefined;
       let num = Number(ts?.Number ?? 0);
       const rep1 = await client.chat.postMessage({
-        channel: "C09TXAZ8GAG",
+        channel: privChannel,
         text: `<#${event.channel.id}> (${event.channel.name}) was renamed.`,
         thread_ts: messagets,
       });
       const pubmes = ts?.PubMes as string | undefined;
       await client.chat.postMessage({
-        channel: "C09UH2LCP1Q",
+        channel: pubChannel,
         text: `<#${event.channel.id}> (${event.channel.name}) was renamed.`,
         thread_ts: pubmes,
       });
       await client.chat.postMessage({
-        channel: "C09UH2LCP1Q",
+        channel: pubChannel,
         text: `<#${event.channel.id}> (${event.channel.name}) was renamed.`,
       });
       await dbRun(
@@ -305,18 +310,18 @@ const register = (app: App) => {
       const messagets = ts?.Messagets as string | undefined;
       let num = Number(ts?.Number ?? 0);
       const rep1 = await client.chat.postMessage({
-        channel: "C09TXAZ8GAG",
+        channel: privChannel,
         text: `<#${event.channel}> was unarchived by <@${event.user}>.`,
         thread_ts: messagets,
       });
       const pubmes = ts?.PubMes as string | undefined;
       await client.chat.postMessage({
-        channel: "C09UH2LCP1Q",
+        channel: pubChannel,
         text: `<#${event.channel}> was unarchived by <@${event.user}>.`,
         thread_ts: pubmes,
       });
       await client.chat.postMessage({
-        channel: "C09UH2LCP1Q",
+        channel: pubChannel,
         text: `<#${event.channel}> was unarchived by <@${event.user}>.`,
       });
       await dbRun(
@@ -346,7 +351,7 @@ const register = (app: App) => {
       const messagets = ts?.Messagets as string | undefined;
       let num = Number(ts?.Number ?? 0);
       const rep1 = await client.chat.postMessage({
-        channel: "C09TXAZ8GAG",
+        channel: privChannel,
         text: `<!subteam^${event.subteam.id}> (${event.subteam.handle}) was made by <@${event.subteam.created_by}>. Details: \n
           Name: ${event.subteam.name}\n
           Users: ${usersarray}\n
@@ -385,7 +390,7 @@ const register = (app: App) => {
       const messagets = ts?.Messagets as string | undefined;
       let num = Number(ts?.Number ?? 0);
       const rep1 = await client.chat.postMessage({
-        channel: "C09TXAZ8GAG",
+        channel: privChannel,
         text: `<!subteam^${event.subteam_id}> change was a member one:\n
         Added users: ${addarray}\n
         Added count: ${event.added_users_count}\n
@@ -421,7 +426,7 @@ const register = (app: App) => {
         const messagets = ts?.Messagets as string | undefined;
         let num = Number(ts?.Number ?? 0);
         const rep1 = await client.chat.postMessage({
-          channel: "C09TXAZ8GAG",
+          channel: privChannel,
           text: `<!subteam^${event.subteam.id}> was deleted by <@${event.subteam.deleted_by}>. Details:\n
           Date created: ${event.subteam.date_create}\n
           Name: ${event.subteam.name}\n
@@ -446,7 +451,7 @@ const register = (app: App) => {
         const messagets = ts?.Messagets as string | undefined;
         let num = Number(ts?.Number ?? 0);
         const rep1 = await client.chat.postMessage({
-          channel: "C09TXAZ8GAG",
+          channel: privChannel,
           text: `<!subteam^${event.subteam.id}> was updated by <@${event.subteam.updated_by}>. Details:\n
           Date created: ${event.subteam.date_create}\n
           Name: ${event.subteam.name}\n
@@ -479,18 +484,18 @@ const register = (app: App) => {
           const messagets = ts?.Messagets as string | undefined;
           let num = Number(ts?.Number ?? 0);
           const rep1 = await client.chat.postMessage({
-            channel: "C09TXAZ8GAG",
+            channel: privChannel,
             text: `:${event.name}: was added (alias of :${event.value.split(":")[1]}:)!`,
             thread_ts: messagets,
           });
           const pubmes = ts?.PubMes as string | undefined;
           await client.chat.postMessage({
-            channel: "C09UH2LCP1Q",
+            channel: pubChannel,
             text: `:${event.name}: was added (alias of :${event.value.split(":")[1]}:)!`,
             thread_ts: pubmes,
           });
           await client.chat.postMessage({
-            channel: "C09UH2LCP1Q",
+            channel: pubChannel,
             text: `:${event.name}: was added (alias of :${event.value.split(":")[1]}:)!`,
           });
           await dbRun(
@@ -505,18 +510,18 @@ const register = (app: App) => {
           const messagets = ts?.Messagets as string | undefined;
           let num = Number(ts?.Number ?? 0);
           const rep1 = await client.chat.postMessage({
-            channel: "C09TXAZ8GAG",
+            channel: privChannel,
             text: `:${event.name}: was added!`,
             thread_ts: messagets,
           });
           const pubmes = ts?.PubMes as string | undefined;
           await client.chat.postMessage({
-            channel: "C09UH2LCP1Q",
+            channel: pubChannel,
             text: `:${event.name}: was added!`,
             thread_ts: pubmes,
           });
           await client.chat.postMessage({
-            channel: "C09UH2LCP1Q",
+            channel: pubChannel,
             text: `:${event.name}: was added!`,
           });
           await dbRun(
@@ -532,18 +537,18 @@ const register = (app: App) => {
         const messagets = ts?.Messagets as string | undefined;
         let num = Number(ts?.Number ?? 0);
         const rep1 = await client.chat.postMessage({
-          channel: "C09TXAZ8GAG",
+          channel: privChannel,
           text: `${event.names} was removed.`,
           thread_ts: messagets,
         });
         const pubmes = ts?.PubMes as string | undefined;
         await client.chat.postMessage({
-          channel: "C09UH2LCP1Q",
+          channel: pubChannel,
           text: `${event.names} was removed.`,
           thread_ts: pubmes,
         });
         await client.chat.postMessage({
-          channel: "C09UH2LCP1Q",
+          channel: pubChannel,
           text: `${event.names} was removed.`,
         });
         await dbRun(
@@ -559,17 +564,17 @@ const register = (app: App) => {
         let num = Number(ts?.Number ?? 0);
         const pubmes = ts?.PubMes as string | undefined;
         const rep1 = await client.chat.postMessage({
-          channel: "C09TXAZ8GAG",
+          channel: privChannel,
           text: `${event.old_name} was renamed to ${event.new_name}.`,
           thread_ts: messagets,
         });
         await client.chat.postMessage({
-            channel: "C09UH2LCP1Q",
+            channel: pubChannel,
             text: `${event.old_name} was renamed to ${event.new_name}.`,
             thread_ts: pubmes,
           });
           await client.chat.postMessage({
-            channel: "C09UH2LCP1Q",
+            channel: pubChannel,
             text: `${event.old_name} was renamed to ${event.new_name}.`,
           });
         await dbRun(
@@ -601,7 +606,7 @@ const register = (app: App) => {
         const messagets = ts?.Messagets as string | undefined;
         let num = Number(ts?.Number ?? 0);
         const rep1 = await client.chat.postMessage({
-          channel: "C09TXAZ8GAG",
+          channel: privChannel,
           text: `<@${event.user}> has turned on their Do Not Disturb\nStarts: ${startStr}\nEnds: ${endStr}!`,
           thread_ts: messagets,
         });
@@ -617,7 +622,7 @@ const register = (app: App) => {
         const messagets = ts?.Messagets as string | undefined;
         let num = Number(ts?.Number ?? 0);
         const rep1 = await client.chat.postMessage({
-          channel: "C09TXAZ8GAG",
+          channel: privChannel,
           text: `<@${event.user}> has turned off their Do Not Disturb.`,
           thread_ts: messagets,
         });
@@ -643,7 +648,7 @@ const register = (app: App) => {
         const messagets = ts?.Messagets as string | undefined;
         let num = Number(ts?.Number ?? 0);
         const rep1 = await client.chat.postMessage({
-          channel: "C09TXAZ8GAG",
+          channel: privChannel,
           text: `<@${event.user.id}> has joined a huddle ${callInfo}!`,
           thread_ts: messagets,
         });
@@ -659,7 +664,7 @@ const register = (app: App) => {
         let num = Number(ts?.Number ?? 0);
         const messagets = ts?.Messagets as string | undefined;
         const rep1 = await client.chat.postMessage({
-          channel: "C09TXAZ8GAG",
+          channel: privChannel,
           text: `<@${event.user.id}> has left a huddle.`,
           thread_ts: messagets,
         });
@@ -671,6 +676,188 @@ const register = (app: App) => {
         );
         logger.info('Updated Huddle Left record');
       }
+    } catch (error) {
+      logger.error('Error handling message event', error);
+    }
+  });
+
+  app.event('file_created', async ({ event, client, logger }) => {
+    try {
+      const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'File Created') as any;
+      const fileid = event.file.id;
+      const fileInfo = await client.files.info({ file: fileid });
+      const messagets = ts?.Messagets as string | undefined;
+      let num = Number(ts?.Number ?? 0);
+      const rep1 = await client.chat.postMessage({
+        channel: privChannel,
+        text: `File ${fileInfo.file.name} has been created. Details:
+        Channels: ${fileInfo.file.channels && fileInfo.file.channels.length > 0 ? fileInfo.file.channels.map((id: string) => `<#${id}>`).join(', ') : 'none'},
+        User: ${fileInfo.file.user ? `<@${fileInfo.file.user}>` : 'unknown'},
+        Id: ${fileInfo.file.id},
+        Size: ${fileInfo.file.size} bytes,
+        Title: ${fileInfo.file.title},
+        Mimetype: ${fileInfo.file.mimetype},
+        Url: ${fileInfo.file.url_private}
+        `,
+        thread_ts: messagets,
+      });
+      await dbRun(
+        'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
+        rep1.ts,
+        num + 1,
+        'File Created'
+      );
+      logger.info('Updated File Created record');
+    } catch (error) {
+      logger.error('Error handling message event', error);
+    }
+  });
+
+  app.event('file_shared', async ({ event, client, logger }) => {
+    try {
+      const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'File Shared') as any;
+      const fileid = event.file.id;
+      const fileInfo = await client.files.info({ file: fileid });
+      const messagets = ts?.Messagets as string | undefined;
+      let num = Number(ts?.Number ?? 0);
+      const rep1 = await client.chat.postMessage({
+        channel: privChannel,
+        text: `File ${fileInfo.file.name} has been shared. Details:
+        Channel: ${event.channel_id ? `<#${event.channel_id}>` : 'unknown'},
+        User: ${event.user_id ? `<@${event.user_id}>` : 'unknown'},
+        Id: ${event.file.id},
+        Size: ${fileInfo.file.size} bytes,
+        Title: ${fileInfo.file.title},
+        Mimetype: ${fileInfo.file.mimetype},
+        Url: ${fileInfo.file.url_private}
+        `,
+        thread_ts: messagets,
+      });
+      await dbRun(
+        'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
+        rep1.ts,
+        num + 1,
+        'File Shared'
+      );
+      logger.info('Updated File Shared record');
+    } catch (error) {
+      logger.error('Error handling message event', error);
+    }
+  });
+
+  app.event('file_changed', async ({ event, client, logger }) => {
+    try {
+      const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'File Changed') as any;
+      const fileid = event.file.id;
+      const fileInfo = await client.files.info({ file: fileid });
+      const messagets = ts?.Messagets as string | undefined;
+      let num = Number(ts?.Number ?? 0);
+      const rep1 = await client.chat.postMessage({
+        channel: privChannel,
+        text: `File ${fileInfo.file.name} has been changed. Details:
+        Channels: ${fileInfo.file.channels && fileInfo.file.channels.length > 0 ? fileInfo.file.channels.map((id: string) => `<#${id}>`).join(', ') : 'none'},
+        User: ${fileInfo.file.user ? `<@${fileInfo.file.user}>` : 'unknown'},
+        Id: ${event.file.id},
+        Size: ${fileInfo.file.size} bytes,
+        Title: ${fileInfo.file.title},
+        Mimetype: ${fileInfo.file.mimetype},
+        Url: ${fileInfo.file.url_private}
+        `,
+        thread_ts: messagets,
+      });
+      await dbRun(
+        'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
+        rep1.ts,
+        num + 1,
+        'File Changed'
+      );
+      logger.info('Updated File Changed record');
+    } catch (error) {
+      logger.error('Error handling message event', error);
+    }
+  });
+
+  app.event('file_deleted', async ({ event, client, logger }) => {
+    try {
+      const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'File Deleted') as any;
+      const fileid = event.file.id;
+      const messagets = ts?.Messagets as string | undefined;
+      let num = Number(ts?.Number ?? 0);
+      const rep1 = await client.chat.postMessage({
+        channel: privChannel,
+        text: `File ${fileid} has been deleted.`,
+        thread_ts: messagets,
+      });
+      await dbRun(
+        'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
+        rep1.ts,
+        num + 1,
+        'File Deleted'
+      );
+      logger.info('Updated File Deleted record');
+    } catch (error) {
+      logger.error('Error handling message event', error);
+    }
+  });
+
+  app.event('file_public', async ({ event, client, logger }) => {
+    try {
+      const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'File Public') as any;
+      const fileid = event.file.id;
+      const fileInfo = await client.files.info({ file: fileid });
+      const messagets = ts?.Messagets as string | undefined;
+      let num = Number(ts?.Number ?? 0);
+      const rep1 = await client.chat.postMessage({
+        channel: privChannel,
+        text: `File ${fileInfo.file.name} has been made public. Details:
+        Channels: ${fileInfo.file.channels && fileInfo.file.channels.length > 0 ? fileInfo.file.channels.map((id: string) => `<#${id}>`).join(', ') : 'none'},
+        User: ${fileInfo.file.user ? `<@${fileInfo.file.user}>` : 'unknown'},
+        Id: ${event.file.id},
+        Size: ${fileInfo.file.size} bytes,
+        Title: ${fileInfo.file.title},
+        Mimetype: ${fileInfo.file.mimetype},
+        Url: ${fileInfo.file.url_private}
+        `,
+        thread_ts: messagets,
+      });
+      await dbRun(
+        'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
+        rep1.ts,
+        num + 1,
+        'File Public'
+      );
+      logger.info('Updated File Public record');
+    } catch (error) {
+      logger.error('Error handling message event', error);
+    }
+  });
+
+  app.event('file_unshared', async ({ event, client, logger }) => {
+    try {
+      const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'File Unshared') as any;
+      const fileid = event.file.id;
+      const fileInfo = await client.files.info({ file: fileid });
+      const messagets = ts?.Messagets as string | undefined;
+      let num = Number(ts?.Number ?? 0);
+      const rep1 = await client.chat.postMessage({
+        channel: privChannel,
+        text: `File ${fileInfo.file.name} with id ${event.file.id} has been unshared. Details:
+        Channels: ${fileInfo.file.channels && fileInfo.file.channels.length > 0 ? fileInfo.file.channels.map((id: string) => `<#${id}>`).join(', ') : 'none'},
+        User: ${fileInfo.file.user ? `<@${fileInfo.file.user}>` : 'unknown'},
+        Size: ${fileInfo.file.size} bytes,
+        Title: ${fileInfo.file.title},
+        Mimetype: ${fileInfo.file.mimetype},
+        Url: ${fileInfo.file.url_private}
+        `,
+        thread_ts: messagets,
+      });
+      await dbRun(
+        'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
+        rep1.ts,
+        num + 1,
+        'File Unshared'
+      );
+      logger.info('Updated File Unshared record');
     } catch (error) {
       logger.error('Error handling message event', error);
     }
