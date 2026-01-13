@@ -728,6 +728,12 @@ const register = (app: App) => {
 
   app.event('file_shared', async ({ event, client, logger }) => {
     try {
+      // Ignore files shared in the privChannel
+      if (event.channel_id === privChannel) {
+        logger.info(`Ignoring file_shared event in privChannel: ${event.file.id}`);
+        return;
+      }
+
       const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'File Shared') as any;
       const fileid = event.file.id;
       let fileInfo;
@@ -749,8 +755,8 @@ const register = (app: App) => {
       const rep1 = await client.chat.postMessage({
         channel: privChannel,
         text: `File ${fileInfo.file.name} has been shared. Details:
-        Channel: ${event.channel_id ? `<#${event.channel_id}>` : 'unknown'},
-        User: ${event.user_id ? `<@${event.user_id}>` : 'unknown'},
+        Channel: ${event.channel_id ? `<#${event.channel_id}>` : 'unknown'}
+        User: ${event.user_id ? `<@${event.user_id}>` : 'unknown'}
         Id: ${event.file.id},
         Size: ${fileInfo.file.size} bytes,
         Title: ${fileInfo.file.title},
