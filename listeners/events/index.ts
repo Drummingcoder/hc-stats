@@ -685,33 +685,11 @@ const register = (app: App) => {
     try {
       const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'File Created') as any;
       const fileid = event.file.id;
-      let fileInfo;
-      try {
-        fileInfo = await client.files.info({ file: fileid });
-      } catch (fileError: any) {
-        if (fileError?.data?.error === 'file_not_found') {
-          logger.warn(`File ${fileid} not found for file_created event`);
-          return;
-        }
-        throw fileError;
-      }
-      if (!fileInfo?.file) {
-        logger.warn('File info not available for file_created event');
-        return;
-      }
       const messagets = ts?.Messagets as string | undefined;
       let num = Number(ts?.Number ?? 0);
       const rep1 = await client.chat.postMessage({
         channel: privChannel,
-        text: `File ${fileInfo.file.name} has been created. Details:
-        Channels: ${fileInfo.file.channels && fileInfo.file.channels.length > 0 ? fileInfo.file.channels.map((id: string) => `<#${id}>`).join(', ') : 'none'},
-        User: ${fileInfo.file.user ? `<@${fileInfo.file.user}>` : 'unknown'},
-        Id: ${fileInfo.file.id},
-        Size: ${fileInfo.file.size} bytes,
-        Title: ${fileInfo.file.title},
-        Mimetype: ${fileInfo.file.mimetype},
-        Url: ${fileInfo.file.url_private}
-        `,
+        text: `File ${fileid} has been created.`,
         thread_ts: messagets,
       });
       await dbRun(
@@ -736,33 +714,11 @@ const register = (app: App) => {
 
       const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'File Shared') as any;
       const fileid = event.file.id;
-      let fileInfo;
-      try {
-        fileInfo = await client.files.info({ file: fileid });
-      } catch (fileError: any) {
-        if (fileError?.data?.error === 'file_not_found') {
-          logger.warn(`File ${fileid} not found for file_shared event`);
-          return;
-        }
-        throw fileError;
-      }
-      if (!fileInfo?.file) {
-        logger.warn('File info not available for file_shared event');
-        return;
-      }
       const messagets = ts?.Messagets as string | undefined;
       let num = Number(ts?.Number ?? 0);
       const rep1 = await client.chat.postMessage({
         channel: privChannel,
-        text: `File ${fileInfo.file.name} has been shared. Details:
-        Channel: ${event.channel_id ? `<#${event.channel_id}>` : 'unknown'}
-        User: ${event.user_id ? `<@${event.user_id}>` : 'unknown'}
-        Id: ${event.file.id},
-        Size: ${fileInfo.file.size} bytes,
-        Title: ${fileInfo.file.title},
-        Mimetype: ${fileInfo.file.mimetype},
-        Url: ${fileInfo.file.url_private}
-        `,
+        text: `File ${fileid} has been shared.`,
         thread_ts: messagets,
       });
       await dbRun(
@@ -781,33 +737,11 @@ const register = (app: App) => {
     try {
       const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'File Changed') as any;
       const fileid = event.file.id;
-      let fileInfo;
-      try {
-        fileInfo = await client.files.info({ file: fileid });
-      } catch (fileError: any) {
-        if (fileError?.data?.error === 'file_not_found') {
-          logger.warn(`File ${fileid} not found for file_change event`);
-          return;
-        }
-        throw fileError;
-      }
-      if (!fileInfo?.file) {
-        logger.warn('File info not available for file_change event');
-        return;
-      }
       const messagets = ts?.Messagets as string | undefined;
       let num = Number(ts?.Number ?? 0);
       const rep1 = await client.chat.postMessage({
         channel: privChannel,
-        text: `File ${fileInfo.file.name} has been changed. Details:
-        Channels: ${fileInfo.file.channels && fileInfo.file.channels.length > 0 ? fileInfo.file.channels.map((id: string) => `<#${id}>`).join(', ') : 'none'},
-        User: ${fileInfo.file.user ? `<@${fileInfo.file.user}>` : 'unknown'},
-        Id: ${event.file.id},
-        Size: ${fileInfo.file.size} bytes,
-        Title: ${fileInfo.file.title},
-        Mimetype: ${fileInfo.file.mimetype},
-        Url: ${fileInfo.file.url_private}
-        `,
+        text: `File ${fileid} has been changed.`,
         thread_ts: messagets,
       });
       await dbRun(
@@ -849,33 +783,11 @@ const register = (app: App) => {
     try {
       const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'File Public') as any;
       const fileid = event.file.id;
-      let fileInfo;
-      try {
-        fileInfo = await client.files.info({ file: fileid });
-      } catch (fileError: any) {
-        if (fileError?.data?.error === 'file_not_found') {
-          logger.warn(`File ${fileid} not found for file_public event`);
-          return;
-        }
-        throw fileError;
-      }
-      if (!fileInfo?.file) {
-        logger.warn('File info not available for file_public event');
-        return;
-      }
       const messagets = ts?.Messagets as string | undefined;
       let num = Number(ts?.Number ?? 0);
       const rep1 = await client.chat.postMessage({
         channel: privChannel,
-        text: `File ${fileInfo.file.name} has been made public. Details:
-        Channels: ${fileInfo.file.channels && fileInfo.file.channels.length > 0 ? fileInfo.file.channels.map((id: string) => `<#${id}>`).join(', ') : 'none'},
-        User: ${fileInfo.file.user ? `<@${fileInfo.file.user}>` : 'unknown'},
-        Id: ${event.file.id},
-        Size: ${fileInfo.file.size} bytes,
-        Title: ${fileInfo.file.title},
-        Mimetype: ${fileInfo.file.mimetype},
-        Url: ${fileInfo.file.url_private}
-        `,
+        text: `File ${fileid} has been made public.`,
         thread_ts: messagets,
       });
       await dbRun(
@@ -894,32 +806,11 @@ const register = (app: App) => {
     try {
       const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'File Unshared') as any;
       const fileid = event.file.id;
-      let fileInfo;
-      try {
-        fileInfo = await client.files.info({ file: fileid });
-      } catch (fileError: any) {
-        if (fileError?.data?.error === 'file_not_found') {
-          logger.warn(`File ${fileid} not found for file_unshared event`);
-          return;
-        }
-        throw fileError;
-      }
-      if (!fileInfo?.file) {
-        logger.warn('File info not available for file_unshared event');
-        return;
-      }
       const messagets = ts?.Messagets as string | undefined;
       let num = Number(ts?.Number ?? 0);
       const rep1 = await client.chat.postMessage({
         channel: privChannel,
-        text: `File ${fileInfo.file.name} with id ${event.file.id} has been unshared. Details:
-        Channels: ${fileInfo.file.channels && fileInfo.file.channels.length > 0 ? fileInfo.file.channels.map((id: string) => `<#${id}>`).join(', ') : 'none'},
-        User: ${fileInfo.file.user ? `<@${fileInfo.file.user}>` : 'unknown'},
-        Size: ${fileInfo.file.size} bytes,
-        Title: ${fileInfo.file.title},
-        Mimetype: ${fileInfo.file.mimetype},
-        Url: ${fileInfo.file.url_private}
-        `,
+        text: `File ${fileid} has been unshared.`,
         thread_ts: messagets,
       });
       await dbRun(
