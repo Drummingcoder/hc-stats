@@ -718,7 +718,10 @@ const register = (app: App) => {
       let num = Number(ts?.Number ?? 0);
       const rep1 = await client.chat.postMessage({
         channel: privChannel,
-        text: `File ${fileid} has been shared.`,
+        text: `File ${fileid} has been shared. Details:\n
+        Channel: <#${event.channel_id}>\n
+        User: <@${event.user_id}>
+        `,
         thread_ts: messagets,
       });
       await dbRun(
