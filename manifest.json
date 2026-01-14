@@ -33,6 +33,7 @@
                 "mpim:history",
                 "usergroups:read",
                 "users:read",
+                "users:read.email",
                 "app_mentions:read",
                 "dnd:read"
             ]
@@ -56,10 +57,11 @@
                 "dnd_updated_user",
                 "file_created",
                 "file_shared",
-                "file_changed",
+                "file_change",
                 "file_deleted",
                 "file_public",
-                "file_unshared"
+                "file_unshared",
+                "user_change"
             ]
         },
         "interactivity": {

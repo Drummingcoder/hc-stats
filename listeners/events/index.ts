@@ -71,7 +71,13 @@ try {
     'Emoji Changed', 'Emoji Removed', 'Emoji Alias Added',
     'Dnd Set Active', 'Dnd Set Inactive', 'Huddle Joined', 'Huddle Left', 
     'File Created', 'File Shared', 'File Changed', 'File Deleted',
-    "File Public", "File Unshared"
+    'File Public', 'File Unshared', 'Username Changed', 'Real Name Changed', 'Display Name Changed',
+    'User Deactivated', 'User Become Admin', 'User Become Owner', 'Change to MCG',
+    'Change to SCG', 'Pronouns Changed', 'Emails Changed', 'Title Changed',
+    'Phone Number Changed', 'Start Date Changed', 'Timezone Changed', 
+    'Locale Changed', 'Status Text Changed', 'Status Emoji Changed',
+    'Status Expiration Changed', 'Profile Image Change', 'User Reactivated',
+    'Removed Admin', 'Removed Owner', 'Change to User'
   ];
 
   // 3. Use a Batch for Seeding
@@ -823,6 +829,446 @@ const register = (app: App) => {
         'File Unshared'
       );
       logger.info('Updated File Unshared record');
+    } catch (error) {
+      logger.error('Error handling message event', error);
+    }
+  });
+
+  app.event('user_change', async ({ event, client, logger }: { event: any, client: any, logger: any }) => {
+    try {
+      logger.info(event.user);
+      const exist = await dbGet('SELECT * FROM users WHERE id = ?', event.user.id) as any;
+      if (exist) {
+        const existingObject = JSON.parse(exist.userobject);
+        
+        if (existingObject.name != event.user.name) {
+          const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Username Changed') as any;
+          const messagets = ts?.Messagets as string | undefined;
+          let num = Number(ts?.Number ?? 0);
+          const rep1 = await client.chat.postMessage({
+            channel: privChannel,
+            text: `User <@${event.user.id}> has changed their username from ${existingObject.name} to ${event.user.name}.`,
+            thread_ts: messagets,
+          });
+          await dbRun(
+            'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
+            rep1.ts,
+            num + 1,
+            'Username Changed'
+          );
+          logger.info('Updated Username Changed record');
+        }
+        if (existingObject.profile.real_name != event.user.profile.real_name) {
+          const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Real Name Changed') as any;
+          const messagets = ts?.Messagets as string | undefined;
+          let num = Number(ts?.Number ?? 0);
+          const rep1 = await client.chat.postMessage({
+            channel: privChannel,
+            text: `User <@${event.user.id}> has changed their real name from ${existingObject.profile.real_name} (${existingObject.profile.real_name_normalized}) to ${event.user.profile.real_name} (${event.user.profile.real_name_normalized}).`,
+            thread_ts: messagets,
+          });
+          await dbRun(
+            'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
+            rep1.ts,
+            num + 1,
+            'Real Name Changed'
+          );
+          logger.info('Updated Real Name Changed record');
+        }
+        if (existingObject.profile.display_name != event.user.profile.display_name) {
+          const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Display Name Changed') as any;
+          const messagets = ts?.Messagets as string | undefined;
+          let num = Number(ts?.Number ?? 0);
+          const rep1 = await client.chat.postMessage({
+            channel: privChannel,
+            text: `User <@${event.user.id}> has changed their display name from ${existingObject.profile.display_name} (${existingObject.profile.display_name_normalized}) to ${event.user.profile.display_name} (${event.user.profile.display_name_normalized}).`,
+            thread_ts: messagets,
+          });
+          await dbRun(
+            'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
+            rep1.ts,
+            num + 1,
+            'Display Name Changed'
+          );
+          logger.info('Updated Display Name Changed record');
+        }
+        if (existingObject.deleted != event.user.deleted) {  
+          if (event.user.deleted) {
+            const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'User Deactivated') as any;
+            const messagets = ts?.Messagets as string | undefined;
+            let num = Number(ts?.Number ?? 0);
+            const rep1 = await client.chat.postMessage({
+              channel: privChannel,
+              text: `User <@${event.user.id}> has been deactivated.`,
+              thread_ts: messagets,
+            });
+            await dbRun(
+              'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
+              rep1.ts,
+              num + 1,
+              'User Deactivated'
+            );
+            logger.info('Updated User Deactivated record');
+          } else {
+            const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'User Reactivated') as any;
+            const messagets = ts?.Messagets as string | undefined;
+            let num = Number(ts?.Number ?? 0);
+            const rep1 = await client.chat.postMessage({
+              channel: privChannel,
+              text: `User <@${event.user.id}> has been reactivated.`,
+              thread_ts: messagets,
+            });
+            await dbRun(
+              'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
+              rep1.ts,
+              num + 1,
+              'User Reactivated'
+            );
+            logger.info('Updated User Reactivated record');
+          }
+        }
+        if (existingObject.is_admin != event.user.is_admin) {
+          if (event.user.is_admin) {
+            const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'User Become Admin') as any;
+            const messagets = ts?.Messagets as string | undefined;
+            let num = Number(ts?.Number ?? 0);
+            const rep1 = await client.chat.postMessage({
+              channel: privChannel,
+              text: `User <@${event.user.id}> has become an admin.`,
+              thread_ts: messagets,
+            });
+            await dbRun(
+              'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
+              rep1.ts,
+              num + 1,
+              'User Become Admin'
+            );
+            logger.info('Updated User Become Admin record');
+          } else {
+            const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Removed Admin') as any;
+            const messagets = ts?.Messagets as string | undefined;
+            let num = Number(ts?.Number ?? 0);
+            const rep1 = await client.chat.postMessage({
+              channel: privChannel,
+              text: `User <@${event.user.id}> has been removed as an admin.`,
+              thread_ts: messagets,
+            });
+            await dbRun(
+              'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
+              rep1.ts,
+              num + 1,
+              'Removed Admin'
+            );
+            logger.info('Updated Removed Admin record');
+          }
+        }
+        if (existingObject.is_owner != event.user.is_owner || existingObject.is_primary_owner != event.user.is_primary_owner) {
+          if (event.user.is_owner || event.user.is_primary_owner) {
+            const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'User Become Owner') as any;
+            const messagets = ts?.Messagets as string | undefined;
+            let num = Number(ts?.Number ?? 0);
+            const rep1 = await client.chat.postMessage({
+              channel: privChannel,
+              text: `User <@${event.user.id}> has become an owner.`,
+              thread_ts: messagets,
+            });
+            await dbRun(
+              'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
+              rep1.ts,
+              num + 1,
+              'User Become Owner'
+            );
+            logger.info('Updated User Become Owner record');
+          } else {
+            const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Removed Owner') as any;
+            const messagets = ts?.Messagets as string | undefined;
+            let num = Number(ts?.Number ?? 0);
+            const rep1 = await client.chat.postMessage({
+              channel: privChannel,
+              text: `User <@${event.user.id}> has been removed as an owner.`,
+              thread_ts: messagets,
+            });
+            await dbRun(
+              'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
+              rep1.ts,
+              num + 1,
+              'Removed Owner'
+            );
+            logger.info('Updated Removed Owner record');
+          }
+        }
+        if (existingObject.is_restricted != event.user.is_restricted) {
+          if (event.user.is_restricted) {
+            const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Change to MCG') as any;
+            const messagets = ts?.Messagets as string | undefined;
+            let num = Number(ts?.Number ?? 0);
+            const rep1 = await client.chat.postMessage({
+              channel: privChannel,
+              text: `User <@${event.user.id}> has become an Multi-Channel Guest.`,
+              thread_ts: messagets,
+            });
+            await dbRun(
+              'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
+              rep1.ts,
+              num + 1,
+              'Change to MCG'
+            );
+            logger.info('Updated Change to MCG record');
+          } else {
+            const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Change to User') as any;
+            const messagets = ts?.Messagets as string | undefined;
+            let num = Number(ts?.Number ?? 0);
+            const rep1 = await client.chat.postMessage({
+              channel: privChannel,
+              text: `User <@${event.user.id}> has become a member.`,
+              thread_ts: messagets,
+            });
+            await dbRun(
+              'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
+              rep1.ts,
+              num + 1,
+              'Change to User'
+            );
+            logger.info('Updated Change to User record');
+          }
+        }
+        if (existingObject.is_ultra_restricted != event.user.is_ultra_restricted) {
+          if (event.user.is_ultra_restricted) {
+            const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Change to SCG') as any;
+            const messagets = ts?.Messagets as string | undefined;
+            let num = Number(ts?.Number ?? 0);
+            const rep1 = await client.chat.postMessage({
+              channel: privChannel,
+              text: `User <@${event.user.id}> has become a Single-Channel Guest.`,
+              thread_ts: messagets,
+            });
+            await dbRun(
+              'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
+              rep1.ts,
+              num + 1,
+              'Change to SCG'
+            );
+            logger.info('Updated Change to SCG record');
+          } else {
+            const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Change to User') as any;
+            const messagets = ts?.Messagets as string | undefined;
+            let num = Number(ts?.Number ?? 0);
+            const rep1 = await client.chat.postMessage({
+              channel: privChannel,
+              text: `User <@${event.user.id}> has become a member.`,
+              thread_ts: messagets,
+            });
+            await dbRun(
+              'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
+              rep1.ts,
+              num + 1,
+              'Change to User'
+            );
+            logger.info('Updated Change to User record');
+          }
+        }
+        if (existingObject.profile.pronouns != event.user.profile.pronouns) {
+          const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Pronouns Changed') as any;
+          const messagets = ts?.Messagets as string | undefined;
+          let num = Number(ts?.Number ?? 0);
+          const rep1 = await client.chat.postMessage({
+            channel: privChannel,
+            text: `User <@${event.user.id}> changed their pronouns from ${existingObject.profile.pronouns} to ${event.user.profile.pronouns}.`,
+            thread_ts: messagets,
+          });
+          await dbRun(
+            'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
+            rep1.ts,
+            num + 1,
+            'Pronouns Changed'
+          );
+          logger.info('Updated Pronouns Changed record');
+        }
+        if (existingObject.profile.email != event.user.profile.email) {
+          const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Emails Changed') as any;
+          const messagets = ts?.Messagets as string | undefined;
+          let num = Number(ts?.Number ?? 0);
+          const rep1 = await client.chat.postMessage({
+            channel: privChannel,
+            text: `User <@${event.user.id}> changed their email from ${existingObject.profile.email} to ${event.user.profile.email}.`,
+            thread_ts: messagets,
+          });
+          await dbRun(
+            'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
+            rep1.ts,
+            num + 1,
+            'Emails Changed'
+          );
+          logger.info('Updated Emails Changed record');
+        }
+        if (existingObject.profile.title != event.user.profile.title) {
+          const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Title Changed') as any;
+          const messagets = ts?.Messagets as string | undefined;
+          let num = Number(ts?.Number ?? 0);
+          const rep1 = await client.chat.postMessage({
+            channel: privChannel,
+            text: `User <@${event.user.id}> changed their title from ${existingObject.profile.title} to ${event.user.profile.title}.`,
+            thread_ts: messagets,
+          });
+          await dbRun(
+            'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
+            rep1.ts,
+            num + 1,
+            'Title Changed'
+          );
+          logger.info('Updated Title Changed record');
+        }
+        if (existingObject.profile.phone != event.user.profile.phone) {
+          const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Phone Number Changed') as any;
+          const messagets = ts?.Messagets as string | undefined;
+          let num = Number(ts?.Number ?? 0);
+          const rep1 = await client.chat.postMessage({
+            channel: privChannel,
+            text: `User <@${event.user.id}> changed their phone number from ${existingObject.profile.phone} to ${event.user.profile.phone}.`,
+            thread_ts: messagets,
+          });
+          await dbRun(
+            'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
+            rep1.ts,
+            num + 1,
+            'Phone Number Changed'
+          );
+          logger.info('Updated Phone Number Changed record');
+        }
+        if (existingObject.profile.start_date != event.user.profile.start_date) {
+          const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Start Date Changed') as any;
+          const messagets = ts?.Messagets as string | undefined;
+          let num = Number(ts?.Number ?? 0);
+          const rep1 = await client.chat.postMessage({
+            channel: privChannel,
+            text: `User <@${event.user.id}> changed their start date from ${existingObject.profile.start_date} to ${event.user.profile.start_date}.`,
+            thread_ts: messagets,
+          });
+          await dbRun(
+            'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
+            rep1.ts,
+            num + 1,
+            'Start Date Changed'
+          );
+          logger.info('Updated Start Date Changed record');
+        }
+        if (existingObject.profile.tz != event.user.profile.tz) {
+          const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Timezone Changed') as any;
+          const messagets = ts?.Messagets as string | undefined;
+          let num = Number(ts?.Number ?? 0);
+          const rep1 = await client.chat.postMessage({
+            channel: privChannel,
+            text: `User <@${event.user.id}> changed their timezone from ${existingObject.profile.tz} (${existingObject.profile.tz_label}) to ${event.user.profile.tz} (${event.user.profile.tz_label}).`,
+            thread_ts: messagets,
+          });
+          await dbRun(
+            'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
+            rep1.ts,
+            num + 1,
+            'Timezone Changed'
+          );
+          logger.info('Updated Timezone Changed record');
+        }
+        if (existingObject.locale != event.user.locale) {
+          const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Locale Changed') as any;
+          const messagets = ts?.Messagets as string | undefined;
+          let num = Number(ts?.Number ?? 0);
+          const rep1 = await client.chat.postMessage({
+            channel: privChannel,
+            text: `User <@${event.user.id}> changed their locale from ${existingObject.locale} to ${event.user.locale}.`,
+            thread_ts: messagets,
+          });
+          await dbRun(
+            'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
+            rep1.ts,
+            num + 1,
+            'Locale Changed'
+          );
+          logger.info('Updated Locale Changed record');
+        }
+        if (existingObject.profile.avatar_hash != event.user.profile.avatar_hash) {
+          const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Profile Image Change') as any;
+          const messagets = ts?.Messagets as string | undefined;
+          let num = Number(ts?.Number ?? 0);
+          const rep1 = await client.chat.postMessage({
+            channel: privChannel,
+            text: `User <@${event.user.id}> changed their profile image from ${existingObject.profile.image_512} to ${event.user.profile.image_512}.`,
+            thread_ts: messagets,
+          });
+          await dbRun(
+            'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
+            rep1.ts,
+            num + 1,
+            'Profile Image Change'
+          );
+          logger.info('Updated Profile Image Change record');
+        }
+        if (existingObject.profile.status_text != event.user.profile.status_text) {
+          const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Status Text Changed') as any;
+          const messagets = ts?.Messagets as string | undefined;
+          let num = Number(ts?.Number ?? 0);
+          const rep1 = await client.chat.postMessage({
+            channel: privChannel,
+            text: `User <@${event.user.id}> changed their status text from ${existingObject.profile.status_text} to ${event.user.profile.status_text}.`,
+            thread_ts: messagets,
+          });
+          await dbRun(
+            'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
+            rep1.ts,
+            num + 1,
+            'Status Text Changed'
+          );
+          logger.info('Updated Status Text Changed record');
+        }
+        if (existingObject.profile.status_emoji != event.user.profile.status_emoji) {
+          const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Status Emoji Changed') as any;
+          const messagets = ts?.Messagets as string | undefined;
+          let num = Number(ts?.Number ?? 0);
+          const rep1 = await client.chat.postMessage({
+            channel: privChannel,
+            text: `User <@${event.user.id}> changed their status emoji from ${existingObject.profile.status_emoji} to ${event.user.profile.status_emoji}.`,
+            thread_ts: messagets,
+          });
+          await dbRun(
+            'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
+            rep1.ts,
+            num + 1,
+            'Status Emoji Changed'
+          );
+          logger.info('Updated Status Emoji Changed record');
+        }
+        if (existingObject.profile.status_expiration != event.user.profile.status_expiration) {
+          const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Status Expiration Changed') as any;
+          const messagets = ts?.Messagets as string | undefined;
+          let num = Number(ts?.Number ?? 0);
+          const rep1 = await client.chat.postMessage({
+            channel: privChannel,
+            text: `User <@${event.user.id}> changed their status expiration from ${existingObject.profile.status_expiration} to ${event.user.profile.status_expiration}.`,
+            thread_ts: messagets,
+          });
+          await dbRun(
+            'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
+            rep1.ts,
+            num + 1,
+            'Status Expiration Changed'
+          );
+          logger.info('Updated Status Expiration Changed record');
+        }
+
+        const userObject = JSON.stringify(event.user);
+        await dbRun(
+          'INSERT OR REPLACE INTO users (id, userobject) VALUES (?, ?)',
+          event.user.id,
+          userObject
+        );
+      } else {
+        const userObject = JSON.stringify(event.user);
+        await dbRun(
+          'INSERT OR REPLACE INTO users (id, userobject) VALUES (?, ?)',
+          event.user.id,
+          userObject
+        );
+      }
     } catch (error) {
       logger.error('Error handling message event', error);
     }
