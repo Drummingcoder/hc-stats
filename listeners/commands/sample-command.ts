@@ -45,6 +45,29 @@ const sampleCommandCallback = async ({ ack, logger, client, command }: AllMiddle
       Files deleted: ${recordMap["File Deleted"]?.Number ?? 0}\n
       Files made public: ${recordMap["File Public"]?.Number ?? 0}\n
       Files unshared: ${recordMap["File Unshared"]?.Number ?? 0}\n
+      Usernames changed: ${recordMap["Username Changed"]?.Number ?? 0}\n
+      Real names changed: ${recordMap["Real Name Changed"]?.Number ?? 0}\n
+      Display names changed: ${recordMap["Display Name Changed"]?.Number ?? 0}\n
+      Users deactivated: ${recordMap["User Deactivated"]?.Number ?? 0}\n
+      Users reactivated: ${recordMap["User Reactivated"]?.Number ?? 0}\n
+      Users became admin: ${recordMap["User Become Admin"]?.Number ?? 0}\n
+      Users removed from admin: ${recordMap["Removed Admin"]?.Number ?? 0}\n
+      Users became owner: ${recordMap["User Become Owner"]?.Number ?? 0}\n
+      Users removed from owner: ${recordMap["Removed Owner"]?.Number ?? 0}\n
+      Changed to MCG: ${recordMap["Change to MCG"]?.Number ?? 0}\n
+      Changed to SCG: ${recordMap["Change to SCG"]?.Number ?? 0}\n
+      Changed to member: ${recordMap["Change to User"]?.Number ?? 0}\n
+      Pronouns changed: ${recordMap["Pronouns Changed"]?.Number ?? 0}\n
+      Emails changed: ${recordMap["Emails Changed"]?.Number ?? 0}\n
+      Title changed: ${recordMap["Title Changed"]?.Number ?? 0}\n
+      Phone number changed: ${recordMap["Phone Number Changed"]?.Number ?? 0}\n
+      Start date changed: ${recordMap["Start Date Changed"]?.Number ?? 0}\n
+      Timezone changed: ${recordMap["Timezone Changed"]?.Number ?? 0}\n
+      Locale changed: ${recordMap["Locale Changed"]?.Number ?? 0}\n
+      Status text changed: ${recordMap["Status Text Changed"]?.Number ?? 0}\n
+      Status emoji changed: ${recordMap["Status Emoji Changed"]?.Number ?? 0}\n
+      Status expiration changed: ${recordMap["Status Expiration Changed"]?.Number ?? 0}\n
+      Profile image changed: ${recordMap["Profile Image Change"]?.Number ?? 0}\n
       `,
     });
     await client.chat.postMessage({
@@ -74,6 +97,29 @@ const sampleCommandCallback = async ({ ack, logger, client, command }: AllMiddle
       Files deleted: ${recordMap["File Deleted"]?.Number ?? 0}\n
       Files made public: ${recordMap["File Public"]?.Number ?? 0}\n
       Files unshared: ${recordMap["File Unshared"]?.Number ?? 0}\n
+      Usernames changed: ${recordMap["Username Changed"]?.Number ?? 0}\n
+      Real names changed: ${recordMap["Real Name Changed"]?.Number ?? 0}\n
+      Display names changed: ${recordMap["Display Name Changed"]?.Number ?? 0}\n
+      Users deactivated: ${recordMap["User Deactivated"]?.Number ?? 0}\n
+      Users reactivated: ${recordMap["User Reactivated"]?.Number ?? 0}\n
+      Users became admin: ${recordMap["User Become Admin"]?.Number ?? 0}\n
+      Users removed from admin: ${recordMap["Removed Admin"]?.Number ?? 0}\n
+      Users became owner: ${recordMap["User Become Owner"]?.Number ?? 0}\n
+      Users removed from owner: ${recordMap["Removed Owner"]?.Number ?? 0}\n
+      Changed to MCG: ${recordMap["Change to MCG"]?.Number ?? 0}\n
+      Changed to SCG: ${recordMap["Change to SCG"]?.Number ?? 0}\n
+      Changed to member: ${recordMap["Change to User"]?.Number ?? 0}\n
+      Pronouns changed: ${recordMap["Pronouns Changed"]?.Number ?? 0}\n
+      Emails changed: ${recordMap["Emails Changed"]?.Number ?? 0}\n
+      Title changed: ${recordMap["Title Changed"]?.Number ?? 0}\n
+      Phone number changed: ${recordMap["Phone Number Changed"]?.Number ?? 0}\n
+      Start date changed: ${recordMap["Start Date Changed"]?.Number ?? 0}\n
+      Timezone changed: ${recordMap["Timezone Changed"]?.Number ?? 0}\n
+      Locale changed: ${recordMap["Locale Changed"]?.Number ?? 0}\n
+      Status text changed: ${recordMap["Status Text Changed"]?.Number ?? 0}\n
+      Status emoji changed: ${recordMap["Status Emoji Changed"]?.Number ?? 0}\n
+      Status expiration changed: ${recordMap["Status Expiration Changed"]?.Number ?? 0}\n
+      Profile image changed: ${recordMap["Profile Image Change"]?.Number ?? 0}\n
       `,
     });
     
@@ -212,6 +258,98 @@ const sampleCommandCallback = async ({ ack, logger, client, command }: AllMiddle
     const rep24 = await client.chat.postMessage({
       channel: privChannel,
       text: `Files unshared: `,
+    });
+    const rep25 = await client.chat.postMessage({
+      channel: privChannel,
+      text: `Usernames changed: `,
+    });
+    const rep26 = await client.chat.postMessage({
+      channel: privChannel,
+      text: `Real names changed: `,
+    });
+    const rep27 = await client.chat.postMessage({
+      channel: privChannel,
+      text: `Display names changed: `,
+    });
+    const rep28 = await client.chat.postMessage({
+      channel: privChannel,
+      text: `User deactivated: `,
+    });
+    const rep47 = await client.chat.postMessage({
+      channel: privChannel,
+      text: `User reactivated: `,
+    });
+    const rep29 = await client.chat.postMessage({
+      channel: privChannel,
+      text: `User became admin: `,
+    });
+    const rep46 = await client.chat.postMessage({
+      channel: privChannel,
+      text: `User removed from admin: `,
+    });
+    const rep30 = await client.chat.postMessage({
+      channel: privChannel,
+      text: `User became owner: `,
+    });
+    const rep45 = await client.chat.postMessage({
+      channel: privChannel,
+      text: `User removed from owner: `,
+    });
+    const rep31 = await client.chat.postMessage({
+      channel: privChannel,
+      text: `Change to MCG: `,
+    });
+    const rep32 = await client.chat.postMessage({
+      channel: privChannel,
+      text: `Change to SCG: `,
+    });
+    const rep44 = await client.chat.postMessage({
+      channel: privChannel,
+      text: `Change to member: `,
+    });
+    const rep33 = await client.chat.postMessage({
+      channel: privChannel,
+      text: `Pronouns changed: `,
+    });
+    const rep34 = await client.chat.postMessage({
+      channel: privChannel,
+      text: `Emails changed: `,
+    });
+    const rep35 = await client.chat.postMessage({
+      channel: privChannel,
+      text: `Title changed: `,
+    });
+    const rep36 = await client.chat.postMessage({
+      channel: privChannel,
+      text: `Phone number changed: `,
+    });
+    const rep37 = await client.chat.postMessage({
+      channel: privChannel,
+      text: `Start date changed: `,
+    });
+    const rep38 = await client.chat.postMessage({
+      channel: privChannel,
+      text: `Timezone changed: `,
+    });
+    const rep39 = await client.chat.postMessage({
+      channel: privChannel,
+      text: `Locale changed: `,
+    });
+    const rep40 = await client.chat.postMessage({
+      channel: privChannel,
+      text: `Status text changed: `,
+    });
+    const rep41 = await client.chat.postMessage({
+      channel: privChannel,
+      text: `Status emoji changed: `,
+    });
+    const rep42 = await client.chat.postMessage({
+      channel: privChannel,
+      text: `Status expiration changed: `,
+    });
+    const rep43 = await client.chat.postMessage({
+      channel: privChannel,
+      text: `Profile image changed: `,
     });
     const airtablePayload = [
       {
@@ -406,7 +544,168 @@ const sampleCommandCallback = async ({ ack, logger, client, command }: AllMiddle
           "Messagets": rep24.ts,
           "Number": 0
         }
-      }
+      },
+      {
+        fields: { 
+          "Field": "Username Changed", 
+          "Messagets": rep25.ts,
+          "Number": 0
+        }
+      },
+      {
+        fields: {
+          "Field": "Real Name Changed",
+          "Messagets": rep26.ts,
+          "Number": 0
+        }
+      },
+      {
+        fields: {
+          "Field": "Display Name Changed",
+          "Messagets": rep27.ts,
+          "Number": 0
+        }
+      },
+      {
+        fields: {
+          "Field": "User Deactivated",
+          "Messagets": rep28.ts,
+          "Number": 0
+        }
+      },
+      {
+        fields: {
+          "Field": "User Reactivated",
+          "Messagets": rep47.ts,
+          "Number": 0
+        }
+      },
+      {
+        fields: {
+          "Field": "User Become Admin",
+          "Messagets": rep29.ts,
+          "Number": 0
+        }
+      },
+      {
+        fields: {
+          "Field": "Removed Admin",
+          "Messagets": rep46.ts,
+          "Number": 0
+        }
+      },
+      {
+        fields: {
+          "Field": "User Become Owner",
+          "Messagets": rep30.ts,
+          "Number": 0
+        }
+      },
+      {
+        fields: {
+          "Field": "Removed Owner",
+          "Messagets": rep45.ts,
+          "Number": 0
+        }
+      },
+      {
+        fields: {
+          "Field": "Change to MCG",
+          "Messagets": rep31.ts,
+          "Number": 0
+        }
+      },
+      {
+        fields: {
+          "Field": "Change to SCG",
+          "Messagets": rep32.ts,
+          "Number": 0
+        }
+      },
+      {
+        fields: {
+          "Field": "Change to User",
+          "Messagets": rep44.ts,
+          "Number": 0
+        }
+      },
+      {
+        fields: {
+          "Field": "Pronouns Changed",
+          "Messagets": rep33.ts,
+          "Number": 0
+        }
+      },
+      {
+        fields: {
+          "Field": "Emails Changed",
+          "Messagets": rep34.ts,
+          "Number": 0
+        }
+      },
+      {
+        fields: {
+          "Field": "Title Changed",
+          "Messagets": rep35.ts,
+          "Number": 0
+        }
+      },
+      {
+        fields: {
+          "Field": "Phone Number Changed",
+          "Messagets": rep36.ts,
+          "Number": 0
+        }
+      },
+      {
+        fields: {
+          "Field": "Start Date Changed",
+          "Messagets": rep37.ts,
+          "Number": 0
+        }
+      },
+      {
+        fields: {
+          "Field": "Timezone Changed",
+          "Messagets": rep38.ts,
+          "Number": 0
+        }
+      },
+      {
+        fields: {
+          "Field": "Locale Changed",
+          "Messagets": rep39.ts,
+          "Number": 0
+        }
+      },
+      {
+        fields: {
+          "Field": "Status Text Changed",
+          "Messagets": rep40.ts,
+          "Number": 0
+        }
+      },
+      {
+        fields: {
+          "Field": "Status Emoji Changed",
+          "Messagets": rep41.ts,
+          "Number": 0
+        }
+      },
+      {
+        fields: {
+          "Field": "Status Expiration Changed",
+          "Messagets": rep42.ts,
+          "Number": 0
+        }
+      },
+      {
+        fields: {
+          "Field": "Profile Image Change",
+          "Messagets": rep43.ts,
+          "Number": 0
+        }
+      },
     ];
     for (const payload of airtablePayload) {
       await dbRun(
