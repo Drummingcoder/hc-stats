@@ -780,13 +780,15 @@ const intervalJob = setInterval(async () => {
         include_locale: true,
       });
 
-      for (const user of next.members) {
-        const userObject = JSON.stringify(user);
-        await dbRun(
-          'INSERT OR REPLACE INTO users (id, userobject) VALUES (?, ?)',
-          user.id,
-          userObject
-        );
+      if (next.members) {
+        for (const user of next.members) {
+          const userObject = JSON.stringify(user);
+          await dbRun(
+            'INSERT OR REPLACE INTO users (id, userobject) VALUES (?, ?)',
+            user.id,
+            userObject
+          );
+        }
       }
 
       if (next.response_metadata?.next_cursor) {
