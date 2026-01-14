@@ -75,9 +75,10 @@ try {
     'User Deactivated', 'User Become Admin', 'User Become Owner', 'Change to MCG',
     'Change to SCG', 'Pronouns Changed', 'Emails Changed', 'Title Changed',
     'Phone Number Changed', 'Start Date Changed', 'Timezone Changed', 
-    'Locale Changed', 'Status Text Changed', 'Status Emoji Changed',
+    'Status Text Changed', 'Status Emoji Changed',
     'Status Expiration Changed', 'Profile Image Change', 'User Reactivated',
-    'Removed Admin', 'Removed Owner', 'Change to User'
+    'Removed Admin', 'Removed Owner', 'Change to User', 'User Added to Workspace',
+    'User Deleted from Workspace'
   ];
 
   // 3. Use a Batch for Seeding
@@ -1169,30 +1170,20 @@ const register = (app: App) => {
           );
           logger.info('Updated Timezone Changed record');
         }
-        if (existingObject.locale != event.user.locale) {
-          const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Locale Changed') as any;
-          const messagets = ts?.Messagets as string | undefined;
-          let num = Number(ts?.Number ?? 0);
-          const rep1 = await client.chat.postMessage({
-            channel: privChannel,
-            text: `User <@${event.user.id}> changed their locale from ${existingObject.locale} to ${event.user.locale}.`,
-            thread_ts: messagets,
-          });
-          await dbRun(
-            'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
-            rep1.ts,
-            num + 1,
-            'Locale Changed'
-          );
-          logger.info('Updated Locale Changed record');
-        }
         if (existingObject.profile.avatar_hash != event.user.profile.avatar_hash) {
           const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Profile Image Change') as any;
           const messagets = ts?.Messagets as string | undefined;
           let num = Number(ts?.Number ?? 0);
+          const newImage = event.user.profile.image_original 
+              || event.user.profile.image_512 
+              || event.user.profile.image_192;
+
+          const oldImage = existingObject.profile.image_original 
+                        || existingObject.profile.image_512 
+                        || "No previous image";
           const rep1 = await client.chat.postMessage({
             channel: privChannel,
-            text: `User <@${event.user.id}> changed their profile image from ${existingObject.profile.image_512} to ${event.user.profile.image_512}.`,
+            text: `User <@${event.user.id}> changed their profile image from ${oldImage} to ${newImage}.`,
             thread_ts: messagets,
           });
           await dbRun(
@@ -1253,6 +1244,42 @@ const register = (app: App) => {
             'Status Expiration Changed'
           );
           logger.info('Updated Status Expiration Changed record');
+        }
+
+        if (existingObject.enterprise_user.teams !== event.user.enterprise_user.teams) {
+          if (event.user.enterprise_user.teams.contains("T0266FRGM")) {
+            const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'User Added to Workspace') as any;
+            const messagets = ts?.Messagets as string | undefined;
+            let num = Number(ts?.Number ?? 0);
+            const rep1 = await client.chat.postMessage({
+              channel: privChannel,
+              text: `User <@${event.user.id}> was added to the workspace.`,
+              thread_ts: messagets,
+            });
+            await dbRun(
+              'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
+              rep1.ts,
+              num + 1,
+              'User Added to Workspace'
+            );
+            logger.info('Updated User Added to Workspace record');
+          } else {
+            const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'User Deleted from Workspace') as any;
+            const messagets = ts?.Messagets as string | undefined;
+            let num = Number(ts?.Number ?? 0);
+            const rep1 = await client.chat.postMessage({
+              channel: privChannel,
+              text: `User <@${event.user.id}> was removed from the workspace.`,
+              thread_ts: messagets,
+            });
+            await dbRun(
+              'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
+              rep1.ts,
+              num + 1,
+              'User Deleted from Workspace'
+            );
+            logger.info('Updated User Deleted from Workspace record');
+          }
         }
 
         const userObject = JSON.stringify(event.user);

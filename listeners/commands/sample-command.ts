@@ -63,11 +63,12 @@ const sampleCommandCallback = async ({ ack, logger, client, command }: AllMiddle
       Phone number changed: ${recordMap["Phone Number Changed"]?.Number ?? 0}\n
       Start date changed: ${recordMap["Start Date Changed"]?.Number ?? 0}\n
       Timezone changed: ${recordMap["Timezone Changed"]?.Number ?? 0}\n
-      Locale changed: ${recordMap["Locale Changed"]?.Number ?? 0}\n
       Status text changed: ${recordMap["Status Text Changed"]?.Number ?? 0}\n
       Status emoji changed: ${recordMap["Status Emoji Changed"]?.Number ?? 0}\n
       Status expiration changed: ${recordMap["Status Expiration Changed"]?.Number ?? 0}\n
       Profile image changed: ${recordMap["Profile Image Change"]?.Number ?? 0}\n
+      User added to workspace: ${recordMap["User Added to Workspace"]?.Number ?? 0}\n
+      User removed from workspace: ${recordMap["User Deleted from Workspace"]?.Number ?? 0}\n
       `,
     });
     await client.chat.postMessage({
@@ -115,11 +116,12 @@ const sampleCommandCallback = async ({ ack, logger, client, command }: AllMiddle
       Phone number changed: ${recordMap["Phone Number Changed"]?.Number ?? 0}\n
       Start date changed: ${recordMap["Start Date Changed"]?.Number ?? 0}\n
       Timezone changed: ${recordMap["Timezone Changed"]?.Number ?? 0}\n
-      Locale changed: ${recordMap["Locale Changed"]?.Number ?? 0}\n
       Status text changed: ${recordMap["Status Text Changed"]?.Number ?? 0}\n
       Status emoji changed: ${recordMap["Status Emoji Changed"]?.Number ?? 0}\n
       Status expiration changed: ${recordMap["Status Expiration Changed"]?.Number ?? 0}\n
       Profile image changed: ${recordMap["Profile Image Change"]?.Number ?? 0}\n
+      User added to workspace: ${recordMap["User Added to Workspace"]?.Number ?? 0}\n
+      User removed from workspace: ${recordMap["User Deleted from Workspace"]?.Number ?? 0}\n
       `,
     });
     
@@ -333,10 +335,6 @@ const sampleCommandCallback = async ({ ack, logger, client, command }: AllMiddle
     });
     const rep39 = await client.chat.postMessage({
       channel: privChannel,
-      text: `Locale changed: `,
-    });
-    const rep40 = await client.chat.postMessage({
-      channel: privChannel,
       text: `Status text changed: `,
     });
     const rep41 = await client.chat.postMessage({
@@ -350,6 +348,14 @@ const sampleCommandCallback = async ({ ack, logger, client, command }: AllMiddle
     const rep43 = await client.chat.postMessage({
       channel: privChannel,
       text: `Profile image changed: `,
+    });
+    const rep48 = await client.chat.postMessage({
+      channel: privChannel,
+      text: `User added to workspace: `,
+    });
+    const rep49 = await client.chat.postMessage({
+      channel: privChannel,
+      text: `User removed from workspace: `,
     });
     const airtablePayload = [
       {
@@ -673,15 +679,8 @@ const sampleCommandCallback = async ({ ack, logger, client, command }: AllMiddle
       },
       {
         fields: {
-          "Field": "Locale Changed",
-          "Messagets": rep39.ts,
-          "Number": 0
-        }
-      },
-      {
-        fields: {
           "Field": "Status Text Changed",
-          "Messagets": rep40.ts,
+          "Messagets": rep39.ts,
           "Number": 0
         }
       },
@@ -703,6 +702,20 @@ const sampleCommandCallback = async ({ ack, logger, client, command }: AllMiddle
         fields: {
           "Field": "Profile Image Change",
           "Messagets": rep43.ts,
+          "Number": 0
+        }
+      },
+      {
+        fields: {
+          "Field": "User Added to Workspace",
+          "Messagets": rep48.ts,
+          "Number": 0
+        }
+      },
+      {
+        fields: {
+          "Field": "User Deleted from Workspace",
+          "Messagets": rep49.ts,
           "Number": 0
         }
       },
