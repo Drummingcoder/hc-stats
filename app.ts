@@ -783,39 +783,65 @@ await turso.execute(`
 `);
 
 const intervalJob = setInterval(async () => {
+  // Use casting if your dbGet return type is 'unknown'
   const state = await dbGet('SELECT * FROM cursor WHERE id = 0');
-  if (state?.condition) return clearInterval(intervalJob);
+  
+  if (state?.condition) {
+    clearInterval(intervalJob);
+    return;
+  }
 
-  let cursor = state?.cursor || "";
+  // FORCE the type here using 'as' or a String cast
+  // Slack's .list expects (string | undefined)
+  let currentCursor: string | undefined = state?.cursor ? String(state.cursor) : undefined;
   
   try {
-    // Process 15 pages (15,000 users)
+    console.log(`Running batch update. Starting cursor: ${currentCursor || 'beginning'}`);
+
     for (let i = 0; i < 15; i++) {
-      const next = await app.client.users.list({ limit: 1000, cursor: cursor, team_id: "T0266FRGM" });
+      const next = await app.client.users.list({ 
+        limit: 1000, 
+        cursor: currentCursor, 
+        team_id: "T0266FRGM" 
+      });
       
-      if (next.members?.length > 0) {
-        // BUILD A BATCH INSERT
-        // This is much faster and counts as fewer "writes" in many DBs
-        const placeholders = next.members.map(() => "(?, ?)").join(",");
-        const values = next.members.flatMap(u => [u.id, JSON.stringify(u)]);
+      // Capture members in a local variable for TS narrowing
+      const members = next.members;
+
+      if (members && members.length > 0) {
+        // Build the batch query
+        const placeholders = members.map(() => "(?, ?)").join(",");
+        
+        // Use 'as string' to satisfy the DB args type
+        const values = members.flatMap(u => [
+          u.id as string, 
+          JSON.stringify(u)
+        ]);
         
         await dbRun(
           `INSERT OR REPLACE INTO users (id, userobject) VALUES ${placeholders}`,
           ...values
         );
+        console.log(`Successfully synced ${members.length} users.`);
       }
 
-      cursor = next.response_metadata?.next_cursor || "";
+      // Move to next cursor
+      currentCursor = next.response_metadata?.next_cursor;
       
-      // Update cursor immediately after successful batch
-      await dbRun('UPDATE cursor SET cursor = ? WHERE id = 0', cursor);
+      // Save progress to DB immediately
+      await dbRun('UPDATE cursor SET cursor = ? WHERE id = 0', currentCursor || "");
 
-      if (!cursor) {
+      // If no more pages, mark as complete and exit loop
+      if (!currentCursor) {
         await dbRun('UPDATE cursor SET condition = 1 WHERE id = 0');
-        return clearInterval(intervalJob);
+        clearInterval(intervalJob);
+        console.log("Full sync complete.");
+        return; 
       }
     }
-  } catch (err) { console.error(err); }
+  } catch (err) { 
+    console.error('Error in interval job:', err); 
+  }
 }, 60000);
 
 registerListeners(app);
