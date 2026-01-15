@@ -15,7 +15,31 @@ const app = new App({
   logLevel: LogLevel.DEBUG,
 });
 
+try {
+  console.log("Resetting database schema...");
+  
+  await turso.batch([
+    // 1. Wipe old tables
+    "DROP TABLE IF EXISTS users",
+    "DROP TABLE IF EXISTS cursor",
 
+    // 2. Create the clean 'users' table with TEXT primary key
+    "CREATE TABLE users (id TEXT PRIMARY KEY, userobject TEXT)",
+
+    // 3. Create the 'cursor' table
+    "CREATE TABLE cursor (id INTEGER PRIMARY KEY, cursor TEXT, condition BOOLEAN DEFAULT 0)",
+
+    // 4. Initialize the tracking row
+    {
+      sql: "INSERT INTO cursor (id, cursor, condition) VALUES (?, ?, ?)",
+      args: [0, "", false]
+    }
+  ], "write");
+
+  console.log("Database reset successfully. You can now start the interval job.");
+} catch (error) {
+  console.error("Failed to reset database:", error);
+}
 
 // Run every hour at minute 0, but only execute at midnight America/Los_Angeles (handles DST)
 cron.schedule('0 * * * *', async () => {
@@ -743,109 +767,55 @@ cron.schedule('0 * * * *', async () => {
   }
 });
 
-// Reset the cursor condition at 9:50 AM Pacific every day
-cron.schedule('0 * * * *', async () => {
-  const now = DateTime.now().setZone('America/Los_Angeles');
-  // Only reset if we're actually at 9:50 AM Pacific (handles DST)
-  if (now.hour !== 9 || now.minute !== 50) return;
-  
-  console.log('Resetting cursor condition at 9:50 AM Pacific...');
-  try {
-    await dbRun(
-      'UPDATE cursor SET condition = ?, cursor = ? WHERE id = ?',
-      false,
-      '',
-      0
-    );
-    console.log('Cursor condition reset successfully');
-  } catch (error) {
-    console.error('Error resetting cursor condition:', error);
-  }
-});
+await turso.execute(`
+  CREATE TABLE IF NOT EXISTS cursor (
+    id NUMBER PRIMARY KEY,
+    cursor TEXT,
+    condition BOOLEAN DEFAULT 0
+  )
+`);
 
-// Cron job that runs every minute until a condition is met
+await turso.execute(`
+  CREATE TABLE IF NOT EXISTS users (
+    id NUMBER PRIMARY KEY,
+    userobject TEXT
+  )
+`);
+
 const intervalJob = setInterval(async () => {
-  await turso.execute(`
-    CREATE TABLE IF NOT EXISTS cursor (
-      id NUMBER PRIMARY KEY,
-      cursor TEXT,
-      condition BOOLEAN DEFAULT 0
-    )
-  `);
+  const state = await dbGet('SELECT * FROM cursor WHERE id = 0');
+  if (state?.condition) return clearInterval(intervalJob);
 
-  await turso.execute(`
-    CREATE TABLE IF NOT EXISTS users (
-      id NUMBER PRIMARY KEY,
-      userobject TEXT
-    )
-  `);
-  
-  // Initialize the row if it doesn't exist
-  await dbRun(
-    'INSERT OR IGNORE INTO cursor (id, cursor, condition) VALUES (?, ?, ?)',
-    0,
-    '',
-    false
-  );
-  
-  const conditionMet = await dbGet('SELECT * FROM cursor WHERE id = ?', 0) as any;
-  
-  if (conditionMet?.condition) {
-    console.log('Condition met, stopping interval job');
-    clearInterval(intervalJob);
-    return;
-  }
+  let cursor = state?.cursor || "";
   
   try {
-    console.log('Running minute interval job...');
-    const teamid = "T0266FRGM";
-    const get = await dbGet('SELECT * FROM cursor WHERE id = ?', 0) as any;
-    let cursor = "";
-    let done = true;
-    if (get) {
-      cursor = get.cursor;
-    }
-    for (let i = 0; i < 15 && done; i++) {
-      const next = await app.client.users.list({
-        limit: 1000,
-        team_id: teamid,
-        cursor: cursor,
-      });
-
-      if (next.members) {
-        for (const user of next.members) {
-          const userObject = JSON.stringify(user);
-          await dbRun(
-            'INSERT OR REPLACE INTO users (id, userobject) VALUES (?, ?)',
-            user.id,
-            userObject
-          );
-        }
-      }
-
-      if (next.response_metadata?.next_cursor) {
-        cursor = next.response_metadata?.next_cursor;
+    // Process 15 pages (15,000 users)
+    for (let i = 0; i < 15; i++) {
+      const next = await app.client.users.list({ limit: 1000, cursor: cursor, team_id: "T0266FRGM" });
+      
+      if (next.members?.length > 0) {
+        // BUILD A BATCH INSERT
+        // This is much faster and counts as fewer "writes" in many DBs
+        const placeholders = next.members.map(() => "(?, ?)").join(",");
+        const values = next.members.flatMap(u => [u.id, JSON.stringify(u)]);
+        
         await dbRun(
-          'UPDATE cursor SET cursor = ?, condition = ? WHERE id = ?',
-          cursor,
-          false,
-          0
+          `INSERT OR REPLACE INTO users (id, userobject) VALUES ${placeholders}`,
+          ...values
         );
-      } else {
-        done = false;
+      }
+
+      cursor = next.response_metadata?.next_cursor || "";
+      
+      // Update cursor immediately after successful batch
+      await dbRun('UPDATE cursor SET cursor = ? WHERE id = 0', cursor);
+
+      if (!cursor) {
+        await dbRun('UPDATE cursor SET condition = 1 WHERE id = 0');
+        return clearInterval(intervalJob);
       }
     }
-
-    if (!done) {
-      await dbRun(
-        'UPDATE cursor SET condition = ? WHERE id = ?',
-        true,
-        0
-      );
-    }
-  } catch (error) {
-    console.error('Error in interval job:', error);
-  }
+  } catch (err) { console.error(err); }
 }, 60000);
 
 registerListeners(app);
