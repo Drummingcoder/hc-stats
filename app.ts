@@ -743,13 +743,13 @@ cron.schedule('0 * * * *', async () => {
   }
 });
 
-// Reset the cursor condition at 9:45 PM Pacific every day
-cron.schedule('45 21 * * *', async () => {
+// Reset the cursor condition at 9:50 AM Pacific every day
+cron.schedule('0 * * * *', async () => {
   const now = DateTime.now().setZone('America/Los_Angeles');
-  // Only reset if we're actually at 9:45 PM Pacific (handles DST)
-  if (now.hour !== 9 || now.minute !== 45) return;
+  // Only reset if we're actually at 9:50 AM Pacific (handles DST)
+  if (now.hour !== 9 || now.minute !== 50) return;
   
-  console.log('Resetting cursor condition at 9:45 AM Pacific...');
+  console.log('Resetting cursor condition at 9:50 AM Pacific...');
   try {
     await dbRun(
       'UPDATE cursor SET condition = ?, cursor = ? WHERE id = ?',
