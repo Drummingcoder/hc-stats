@@ -99,6 +99,12 @@ const register = (app: App) => {
   app.event('team_join', async ({ event, client, logger }: { event: any, client: any, logger: any }) => {
     try {
       logger.info(event.user);
+      const userObject = JSON.stringify(event.user);
+      await dbRun(
+        'INSERT OR REPLACE INTO users (id, userobject) VALUES (?, ?)',
+        event.user.id,
+        userObject
+      );
       if (event.user.is_workflow_bot) {
         const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'New Workflow Bot') as any;
         const messagets = ts?.Messagets as string | undefined;
