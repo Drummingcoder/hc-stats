@@ -160,7 +160,7 @@ cron.schedule('0 * * * *', async () => {
       channel: privChannel,
       text: thread.text,
     });
-    let repPub: { ts: any; } | undefined = undefined;
+    let repPub: { ts?: any; } | undefined = undefined;
     if (pubthreads.find(t => t.field === thread.field)) {
       repPub = await app.client.chat.postMessage({
         channel: pubChannel,
