@@ -374,7 +374,7 @@ const register = (app: App) => {
   });
 
   app.event('file_deleted', async ({ event, client, logger }) => {
-    const fileid = event.file.id;
+    const fileid = event.file_id;
     messandstore(client, 'File Deleted', `File ${fileid} has been deleted.`, privChannel, logger);
   });
 
