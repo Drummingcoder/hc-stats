@@ -12,14 +12,11 @@ const turso = createClient({
 
 // Promisify database methods
 const dbRun = async (sql: string, ...params: any[]) => {
-  try {
-    await turso.execute({
-      sql: sql,
-      args: params
-    });
-  } catch (err) {
-    console.log(err);
-  }
+  const result = await turso.execute({
+    sql: sql,
+    args: params
+  });
+  return result;
 };
 
 const dbGet = async (sql: string, ...params: any[]) => {
@@ -49,7 +46,6 @@ const dbAll = async (sql: string, ...params: any[]) => {
 };
 
 try {
-  // 1. Create the table
   await turso.execute(`
     CREATE TABLE IF NOT EXISTS Data (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -62,7 +58,6 @@ try {
   `);
   console.log('Database table "Data" ready');
 
-  // 2. Define your initial fields
   const initialFields = [
     'New User', 'New Bot', 'New Workflow Bot', 'Channel Created',
     'Channel Archived', 'Channel Deleted', 'Channel Unarchived',
@@ -77,12 +72,9 @@ try {
     'Phone Number Changed', 'Start Date Changed', 'Timezone Changed', 
     'Status Text Changed', 'Status Emoji Changed',
     'Status Expiration Changed', 'Profile Image Change', 'User Reactivated',
-    'Removed Admin', 'Removed Owner', 'Change to User', 'User Added to Workspace',
-    'User Deleted from Workspace'
+    'Removed Admin', 'Removed Owner', 'Change to User'
   ];
 
-  // 3. Use a Batch for Seeding
-  // This sends all inserts in one single network request
   const statements = initialFields.map(field => ({
     sql: 'INSERT OR IGNORE INTO Data (Field, Number) VALUES (?, 0)',
     args: [field]
@@ -95,6 +87,46 @@ try {
   console.error('Error during database initialization:', err);
 }
 
+const messandstore = async (client: any, field: string, message: string, channel: string, logger: any) => {
+  try {
+    const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', field) as any;
+    const messagets = ts?.Messagets as string | undefined;
+    let num = Number(ts?.Number ?? 0);
+    await dbRun(
+      'UPDATE Data SET Number = ? WHERE Field = ?',
+      num + 1,
+      field
+    );
+    await client.chat.postMessage({
+      channel: channel,
+      text: message,
+      thread_ts: messagets,
+    });
+    
+    logger.info(`Updated ${field} record`);
+  } catch (error) {
+    logger.error('Error handling message event', error);
+  }
+};
+
+const publicMessage = async (client: any, field: string, message: string, channel: string, logger: any) => {
+  try {
+    const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', field) as any;
+    const pubmes = ts?.PubMes as string | undefined;
+    await client.chat.postMessage({
+      channel: channel,
+      text: message,
+      thread_ts: pubmes,
+    });
+    await client.chat.postMessage({
+      channel: channel,
+      text: message,
+    });
+  } catch (error) {
+    logger.error('Error handling message event', error);
+  }
+}
+
 const register = (app: App) => {
   app.event('team_join', async ({ event, client, logger }: { event: any, client: any, logger: any }) => {
     try {
@@ -105,65 +137,18 @@ const register = (app: App) => {
         event.user.id,
         userObject
       );
+
       if (event.user.is_workflow_bot) {
-        const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'New Workflow Bot') as any;
-        const messagets = ts?.Messagets as string | undefined;
-        let num = Number(ts?.Number ?? 0);
-        const rep1 = await client.chat.postMessage({
-          channel: privChannel,
-          text: `<@${event.user.id}> the workflow bot has joined! Join type: ${event.type}`,
-          thread_ts: messagets,
-        });
-        const pubmes = ts?.PubMes as string | undefined;
-        await client.chat.postMessage({
-          channel: pubChannel,
-          text: `<@${event.user.id}> the workflow bot has joined! Join type: ${event.type}`,
-          thread_ts: pubmes,
-        });
-        await client.chat.postMessage({
-          channel: pubChannel,
-          text: `<@${event.user.id}> the workflow bot has joined! Join type: ${event.type}`,
-        });
-        await dbRun(
-          'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
-          rep1.ts,
-          num + 1,
-          'New Workflow Bot'
-        );
+        messandstore(client, 'New Workflow Bot', `<@${event.user.id}> the workflow bot has joined! Join type: ${event.type}`, privChannel, logger);
+        publicMessage(client, 'New Workflow Bot', `<@${event.user.id}> the workflow bot has joined! Join type: ${event.type}`, pubChannel, logger);
         logger.info('Updated New Workflow Bot record');
       } else if (event.user.is_bot) {
-        const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'New Bot') as any;
-        const messagets = ts?.Messagets as string | undefined;
-        let num = Number(ts?.Number ?? 0);
-        const rep1 = await client.chat.postMessage({
-          channel: privChannel,
-          text: `<@${event.user.id}> the app has joined! Join type: ${event.type}`,
-          thread_ts: messagets,
-        });
-        const pubmes = ts?.PubMes as string | undefined;
-        await client.chat.postMessage({
-          channel: pubChannel,
-          text: `<@${event.user.id}> the app has joined! Join type: ${event.type}`,
-          thread_ts: pubmes,
-        });
-        await client.chat.postMessage({
-          channel: pubChannel,
-          text: `<@${event.user.id}> the app has joined! Join type: ${event.type}`,
-        });
-        await dbRun(
-          'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
-          rep1.ts,
-          num + 1,
-          'New Bot'
-        );
+        messandstore(client, 'New Bot', `<@${event.user.id}> the app has joined! Join type: ${event.type}`, privChannel, logger);
+        publicMessage(client, 'New Bot', `<@${event.user.id}> the app has joined! Join type: ${event.type}`, pubChannel, logger);
         logger.info('Updated New Bot record');
       } else {
-        const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'New User') as any;
-        const messagets = ts?.Messagets as string | undefined;
-        let num = Number(ts?.Number ?? 0);
-        const rep1 = await client.chat.postMessage({
-          channel: privChannel,
-          text: `<@${event.user.id}> has joined! Details:\n
+        messandstore(client, 'New User', 
+          `<@${event.user.id}> has joined! Details:\n
           Join type: ${event.type}\n
           Display name: ${event.user.name}\n
           Admin (likely not): ${event.user.is_admin ?? false}\n
@@ -174,15 +159,7 @@ const register = (app: App) => {
           Email: ${event.user.profile?.email ?? 'N/A'}\n
           External (Slack Connect): ${event.user.is_stranger ?? false}\n
           Invited: ${event.user.is_invited_user}\n`, 
-          thread_ts: messagets,
-        });
-        await dbRun(
-          'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
-          rep1.ts,
-          num + 1,
-          'New User'
-        );
-        logger.info('Updated New User record');
+          privChannel, logger);
       }
     } catch (error) {
       logger.error('Error handling message event', error);
@@ -190,531 +167,179 @@ const register = (app: App) => {
   });
 
   app.event('channel_created', async ({ event, client, logger }) => {
-    try {
-      const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Channel Created') as any;
-      const messagets = ts?.Messagets as string | undefined;
-      let num = Number(ts?.Number ?? 0);
-      const rep1 = await client.chat.postMessage({
-        channel: privChannel,
-        text: `<#${event.channel.id}> (${event.channel.name}) by <@${event.channel.creator}> has been created.`,
-        thread_ts: messagets,
-      });
-      const pubmes = ts?.PubMes as string | undefined;
-      await client.chat.postMessage({
-        channel: pubChannel,
-        text: `<#${event.channel.id}> (${event.channel.name}) by <@${event.channel.creator}> has been created.`,
-        thread_ts: pubmes,
-      });
-      await client.chat.postMessage({
-        channel: pubChannel,
-        text: `<#${event.channel.id}> (${event.channel.name}) by <@${event.channel.creator}> has been created.`,
-      });
-      await dbRun(
-        'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
-        rep1.ts,
-        num + 1,
-        'Channel Created'
-      );
-      logger.info('Updated Channel Created record');
-    } catch (error) {
-      logger.error('Error handling message event', error);
-    }
+    messandstore(client, 'Channel Created', `<#${event.channel.id}> (${event.channel.name}) by <@${event.channel.creator}> has been created.`, privChannel, logger);
+    publicMessage(client, 'Channel Created', `<#${event.channel.id}> (${event.channel.name}) by <@${event.channel.creator}> has been created.`, pubChannel, logger);
   });
 
   app.event('channel_archive', async ({ event, client, logger }) => {
-    try {
-      const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Channel Archived') as any;
-      const messagets = ts?.Messagets as string | undefined;
-      let num = Number(ts?.Number ?? 0);
-      const rep1 = await client.chat.postMessage({
-        channel: privChannel,
-        text: `<#${event.channel}> was archived by <@${event.user}>.`,
-        thread_ts: messagets,
-      });
-      const pubmes = ts?.PubMes as string | undefined;
-      await client.chat.postMessage({
-        channel: pubChannel,
-        text: `<#${event.channel}> was archived by <@${event.user}>.`,
-        thread_ts: pubmes,
-      });
-      await client.chat.postMessage({
-        channel: pubChannel,
-        text: `<#${event.channel}> was archived by <@${event.user}>.`,
-      });
-      await dbRun(
-        'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
-        rep1.ts,
-        num + 1,
-        'Channel Archived'
-      );
-      logger.info('Updated Channel Archived record');
-    } catch (error) {
-      logger.error('Error handling message event', error);
-    }
+    messandstore(client, 'Channel Archived', `<#${event.channel}> was archived by <@${event.user}>.`, privChannel, logger);
+    publicMessage(client, 'Channel Archived', `<#${event.channel}> was archived by <@${event.user}>.`, pubChannel, logger);
   });
 
   app.event('channel_deleted', async ({ event, client, logger }) => {
-    try {
-      const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Channel Deleted') as any;
-      const messagets = ts?.Messagets as string | undefined;
-      let num = Number(ts?.Number ?? 0);
-      const rep1 = await client.chat.postMessage({
-        channel: privChannel,
-        text: `<#${event.channel}> was deleted.`,
-        thread_ts: messagets,
-      });
-      const pubmes = ts?.PubMes as string | undefined;
-      await client.chat.postMessage({
-        channel: pubChannel,
-        text: `<#${event.channel}> was deleted.`,
-        thread_ts: pubmes,
-      });
-      await client.chat.postMessage({
-        channel: pubChannel,
-        text: `<#${event.channel}> was deleted.`,
-      });
-      await dbRun(
-        'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
-        rep1.ts,
-        num + 1,
-        'Channel Deleted'
-      );
-      logger.info("Channel deleted logged");
-    } catch (error) {
-      logger.error('Error handling message event', error);
-    }
+    messandstore(client, 'Channel Deleted', `<#${event.channel}> was deleted.`, privChannel, logger);
+    publicMessage(client, 'Channel Deleted', `<#${event.channel}> was deleted.`, pubChannel, logger);
   });
 
   app.event('channel_rename', async ({ event, client, logger }) => {
-    try {
-      const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Channel Renamed') as any;
-      const messagets = ts?.Messagets as string | undefined;
-      let num = Number(ts?.Number ?? 0);
-      const rep1 = await client.chat.postMessage({
-        channel: privChannel,
-        text: `<#${event.channel.id}> (${event.channel.name}) was renamed.`,
-        thread_ts: messagets,
-      });
-      const pubmes = ts?.PubMes as string | undefined;
-      await client.chat.postMessage({
-        channel: pubChannel,
-        text: `<#${event.channel.id}> (${event.channel.name}) was renamed.`,
-        thread_ts: pubmes,
-      });
-      await client.chat.postMessage({
-        channel: pubChannel,
-        text: `<#${event.channel.id}> (${event.channel.name}) was renamed.`,
-      });
-      await dbRun(
-        'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
-        rep1.ts,
-        num + 1,
-        'Channel Renamed'
-      );
-      logger.info('Updated Channel Renamed record');
-    } catch (error) {
-      logger.error('Error handling message event', error);
-    }
+    messandstore(client, 'Channel Renamed', `<#${event.channel.id}> (${event.channel.name}) was renamed.`, privChannel, logger);
+    publicMessage(client, 'Channel Renamed', `<#${event.channel.id}> (${event.channel.name}) was renamed.`, pubChannel, logger);
   });
 
   app.event('channel_unarchive', async ({ event, client, logger }) => {
-    try {
-      const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Channel Unarchived') as any;
-      const messagets = ts?.Messagets as string | undefined;
-      let num = Number(ts?.Number ?? 0);
-      const rep1 = await client.chat.postMessage({
-        channel: privChannel,
-        text: `<#${event.channel}> was unarchived by <@${event.user}>.`,
-        thread_ts: messagets,
-      });
-      const pubmes = ts?.PubMes as string | undefined;
-      await client.chat.postMessage({
-        channel: pubChannel,
-        text: `<#${event.channel}> was unarchived by <@${event.user}>.`,
-        thread_ts: pubmes,
-      });
-      await client.chat.postMessage({
-        channel: pubChannel,
-        text: `<#${event.channel}> was unarchived by <@${event.user}>.`,
-      });
-      await dbRun(
-        'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
-        rep1.ts,
-        num + 1,
-        'Channel Unarchived'
-      );
-      logger.info('Updated Channel Unarchived record');
-    } catch (error) {
-      logger.error('Error handling message event', error);
-    }
+    messandstore(client, 'Channel Unarchived', `<#${event.channel}> was unarchived by <@${event.user}>.`, privChannel, logger);
+    publicMessage(client, 'Channel Unarchived', `<#${event.channel}> was unarchived by <@${event.user}>.`, pubChannel, logger);
   });
 
   app.event('subteam_created', async ({ event, client, logger }) => {
-    try {
-      const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Subteam Added') as any;
-      let usersarray = "none";
-      if (event.subteam.users && event.subteam.users.length > 0) {
-        usersarray = event.subteam.users.map(id => `<@${id}>`).join(', ');
-      }
-
-      let channelarray = "none";
-      if (event.subteam.prefs?.channels && event.subteam.prefs.channels.length > 0) {
-        channelarray = event.subteam.prefs.channels.map(id => `<#${id}>`).join(', ');
-      }
-      const messagets = ts?.Messagets as string | undefined;
-      let num = Number(ts?.Number ?? 0);
-      const rep1 = await client.chat.postMessage({
-        channel: privChannel,
-        text: `<!subteam^${event.subteam.id}> (${event.subteam.handle}) was made by <@${event.subteam.created_by}>. Details: \n
-          Name: ${event.subteam.name}\n
-          Users: ${usersarray}\n
-          User count: ${event.subteam.user_count}\n
-          Description: ${event.subteam.description}\n
-          Channels: ${channelarray}\n
-          Channel count: ${event.subteam.channel_count}
-          `,
-        thread_ts: messagets,
-      });
-      await dbRun(
-        'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
-        rep1.ts,
-        num + 1,
-        'Subteam Added'
-      );
-      logger.info('Updated Subteam Added record');
-    } catch (error) {
-      logger.error('Error handling message event', error);
+    let usersarray = "none";
+    if (event.subteam.users && event.subteam.users.length > 0) {
+      usersarray = event.subteam.users.map((id: any) => `<@${id}>`).join(', ');
     }
+
+    let channelarray = "none";
+    if (event.subteam.prefs?.channels && event.subteam.prefs.channels.length > 0) {
+      channelarray = event.subteam.prefs.channels.map((id: any) => `<#${id}>`).join(', ');
+    }
+    messandstore(client, 'Subteam Added', `<!subteam^${event.subteam.id}> (${event.subteam.handle}) was made by <@${event.subteam.created_by}>. Details: \n
+      Name: ${event.subteam.name}\n
+      Users: ${usersarray}\n
+      User count: ${event.subteam.user_count}\n
+      Description: ${event.subteam.description}\n
+      Channels: ${channelarray}\n
+      Channel count: ${event.subteam.channel_count}
+      `, privChannel, logger);
+    publicMessage(client, 'Subteam Added', `<!subteam^${event.subteam.id}> (${event.subteam.handle}) was made by <@${event.subteam.created_by}>. Details: \n
+      Name: ${event.subteam.name}\n
+      Users: ${usersarray}\n
+      User count: ${event.subteam.user_count}\n
+      Description: ${event.subteam.description}\n
+      Channels: ${channelarray}\n
+      Channel count: ${event.subteam.channel_count}
+      `, pubChannel, logger);
   });
 
   app.event('subteam_members_changed', async ({ event, client, logger }) => {
-    try {
-      const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Subteam Members Changed') as any;
-      let addarray = "none";
-      if (event.added_users && event.added_users.length > 0) {
-        addarray = event.added_users.map(id => `<@${id}>`).join(', ');
-      }
-
-      let removedarray = "none";
-      if (event.removed_users && event.removed_users.length > 0) {
-        removedarray = event.removed_users.map(id => `<@${id}>`).join(', ');
-      }
-
-      const messagets = ts?.Messagets as string | undefined;
-      let num = Number(ts?.Number ?? 0);
-      const rep1 = await client.chat.postMessage({
-        channel: privChannel,
-        text: `<!subteam^${event.subteam_id}> change was a member one:\n
-        Added users: ${addarray}\n
-        Added count: ${event.added_users_count}\n
-        Deleted users: ${removedarray}\n
-        Deleted count: ${event.removed_users_count}\n`,
-        thread_ts: messagets,
-      });
-      await dbRun(
-        'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
-        rep1.ts,
-        num + 1,
-        'Subteam Members Changed'
-      );
-      logger.info('Updated Subteam Members Changed record');
-    } catch (error) {
-      logger.error('Error handling message event', error);
+    let addarray = "none";
+    if (event.added_users && event.added_users.length > 0) {
+      addarray = event.added_users.map((id: any) => `<@${id}>`).join(', ');
     }
+
+    let removedarray = "none";
+    if (event.removed_users && event.removed_users.length > 0) {
+      removedarray = event.removed_users.map((id: any) => `<@${id}>`).join(', ');
+    }
+    messandstore(client, 'Subteam Members Changed', `<!subteam^${event.subteam_id}> change was a member one:\n
+      Added users: ${addarray}\n
+      Added count: ${event.added_users_count}\n
+      Deleted users: ${removedarray}\n
+      Deleted count: ${event.removed_users_count}\n`, 
+    privChannel, logger);
   });
 
   app.event('subteam_updated', async ({ event, client, logger }) => {
-    try {
-      let usersarray = "none";
-      if (event.subteam.users && event.subteam.users.length > 0) {
-        usersarray = event.subteam.users.map(id => `<@${id}>`).join(', ');
-      }
+    let usersarray = "none";
+    if (event.subteam.users && event.subteam.users.length > 0) {
+      usersarray = event.subteam.users.map(id => `<@${id}>`).join(', ');
+    }
 
-      let channelarray = "none";
-      if (event.subteam.prefs?.channels && event.subteam.prefs.channels.length > 0) {
-        channelarray = event.subteam.prefs.channels.map(id => `<#${id}>`).join(', ');
-      }
-      if (event.subteam && 'deleted_by' in event.subteam && (event.subteam as any).deleted_by) {
-        const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Subteam Deleted') as any;
-        const messagets = ts?.Messagets as string | undefined;
-        let num = Number(ts?.Number ?? 0);
-        const rep1 = await client.chat.postMessage({
-          channel: privChannel,
-          text: `<!subteam^${event.subteam.id}> was deleted by <@${event.subteam.deleted_by}>. Details:\n
-          Date created: ${event.subteam.date_create}\n
+    let channelarray = "none";
+    if (event.subteam.prefs?.channels && event.subteam.prefs.channels.length > 0) {
+      channelarray = event.subteam.prefs.channels.map(id => `<#${id}>`).join(', ');
+    }
+    
+    if (event.subteam && 'deleted_by' in event.subteam && (event.subteam as any).deleted_by) {
+      const thedate = event.subteam.date_create
+        ? new Date(event.subteam.date_create * 1000)
+        : null;
+      const datestring = thedate ? thedate.toLocaleString() : 'unknown';
+      messandstore(client, 'Subteam Deleted', `<!subteam^${event.subteam.id}> was deleted by <@${event.subteam.deleted_by}>. Details:\n
+        Date created: ${datestring}\n
+        Name: ${event.subteam.name}\n
+        Handle: ${event.subteam.handle}\n
+        Created by: <@${event.subteam.created_by}>\n
+        Description: ${event.subteam.description}\n
+        Members: ${usersarray}\n
+        Member count: ${event.subteam.user_count}\n
+        Channels: ${channelarray}\n
+        Channel count: ${event.subteam.channel_count}`, 
+      privChannel, logger);
+      publicMessage(client, 'Subteam Deleted', `<!subteam^${event.subteam.id}> was deleted by <@${event.subteam.deleted_by}>. Details:\n
+        Date created: ${datestring}\n
+        Name: ${event.subteam.name}\n
+        Handle: ${event.subteam.handle}\n
+        Created by: <@${event.subteam.created_by}>\n
+        Description: ${event.subteam.description}\n
+        Members: ${usersarray}\n
+        Member count: ${event.subteam.user_count}\n
+        Channels: ${channelarray}\n
+        Channel count: ${event.subteam.channel_count}
+      `, pubChannel, logger);
+    } else {
+      const thedate = event.subteam.date_create
+        ? new Date(event.subteam.date_create * 1000)
+        : null;
+      const datestring = thedate ? thedate.toLocaleString() : 'unknown';
+      messandstore(client, 'Subteam Changed', `<!subteam^${event.subteam.id}> was updated by <@${event.subteam.updated_by}>. Details:\n
+          Date created: ${datestring}\n
           Name: ${event.subteam.name}\n
-          Handle: ${event.subteam.handle}\n
           Created by: <@${event.subteam.created_by}>\n
           Description: ${event.subteam.description}\n
           Members: ${usersarray}\n
           Member count: ${event.subteam.user_count}\n
           Channels: ${channelarray}\n
-          Channel count: ${event.subteam.channel_count}`,
-          thread_ts: messagets,
-        });
-        await dbRun(
-          'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
-          rep1.ts,
-          num + 1,
-          'Subteam Deleted'
-        );
-        logger.info('Updated Subteam Deleted record');
-      } else {
-        const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Subteam Changed') as any;
-        const messagets = ts?.Messagets as string | undefined;
-        let num = Number(ts?.Number ?? 0);
-        const rep1 = await client.chat.postMessage({
-          channel: privChannel,
-          text: `<!subteam^${event.subteam.id}> was updated by <@${event.subteam.updated_by}>. Details:\n
-          Date created: ${event.subteam.date_create}\n
-          Name: ${event.subteam.name}\n
-          Created by: <@${event.subteam.created_by}>\n
-          Description: ${event.subteam.description}\n
-          Members: ${usersarray}\n
-          Member count: ${event.subteam.user_count}\n
-          Channels: ${channelarray}\n
-          Channel count: ${event.subteam.channel_count}`,
-          thread_ts: messagets,
-        });
-        await dbRun(
-          'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
-          rep1.ts,
-          num + 1,
-          'Subteam Changed'
-        );
-        logger.info('Updated Subteam Changed record');
-      }
-    } catch (error) {
-      logger.error('Error handling message event', error);
+          Channel count: ${event.subteam.channel_count}`, 
+      privChannel, logger);
     }
   });
 
   app.event('emoji_changed', async ({ event, client, logger }) => {
-    try {
-      if (event.subtype == 'add') {
-        if (event.value?.startsWith("alias")) {
-          const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Emoji Alias Added') as any;
-          const messagets = ts?.Messagets as string | undefined;
-          let num = Number(ts?.Number ?? 0);
-          const rep1 = await client.chat.postMessage({
-            channel: privChannel,
-            text: `:${event.name}: was added (alias of :${event.value.split(":")[1]}:)!`,
-            thread_ts: messagets,
-          });
-          const pubmes = ts?.PubMes as string | undefined;
-          await client.chat.postMessage({
-            channel: pubChannel,
-            text: `:${event.name}: was added (alias of :${event.value.split(":")[1]}:)!`,
-            thread_ts: pubmes,
-          });
-          await client.chat.postMessage({
-            channel: pubChannel,
-            text: `:${event.name}: was added (alias of :${event.value.split(":")[1]}:)!`,
-          });
-          await dbRun(
-            'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
-            rep1.ts,
-            num + 1,
-            'Emoji Alias Added'
-          );
-          logger.info('Updated Emoji Alias Added record');
-        } else {
-          const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Emoji Added') as any;
-          const messagets = ts?.Messagets as string | undefined;
-          let num = Number(ts?.Number ?? 0);
-          const rep1 = await client.chat.postMessage({
-            channel: privChannel,
-            text: `:${event.name}: was added!`,
-            thread_ts: messagets,
-          });
-          const pubmes = ts?.PubMes as string | undefined;
-          await client.chat.postMessage({
-            channel: pubChannel,
-            text: `:${event.name}: was added!`,
-            thread_ts: pubmes,
-          });
-          await client.chat.postMessage({
-            channel: pubChannel,
-            text: `:${event.name}: was added!`,
-          });
-          await dbRun(
-            'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
-            rep1.ts,
-            num + 1,
-            'Emoji Added'
-          );
-          logger.info('Updated Emoji Added record');
-        }
-      } else if (event.subtype == 'remove') {
-        const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Emoji Removed') as any;
-        const messagets = ts?.Messagets as string | undefined;
-        let num = Number(ts?.Number ?? 0);
-        const rep1 = await client.chat.postMessage({
-          channel: privChannel,
-          text: `${event.names} was removed.`,
-          thread_ts: messagets,
-        });
-        const pubmes = ts?.PubMes as string | undefined;
-        await client.chat.postMessage({
-          channel: pubChannel,
-          text: `${event.names} was removed.`,
-          thread_ts: pubmes,
-        });
-        await client.chat.postMessage({
-          channel: pubChannel,
-          text: `${event.names} was removed.`,
-        });
-        await dbRun(
-          'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
-          rep1.ts,
-          num + 1,
-          'Emoji Removed'
-        );
-        logger.info('Updated Emoji Removed record');
-      } else if (event.subtype == "rename") {
-        const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Emoji Changed') as any;
-        const messagets = ts?.Messagets as string | undefined;
-        let num = Number(ts?.Number ?? 0);
-        const pubmes = ts?.PubMes as string | undefined;
-        const rep1 = await client.chat.postMessage({
-          channel: privChannel,
-          text: `${event.old_name} was renamed to ${event.new_name}.`,
-          thread_ts: messagets,
-        });
-        await client.chat.postMessage({
-            channel: pubChannel,
-            text: `${event.old_name} was renamed to ${event.new_name}.`,
-            thread_ts: pubmes,
-          });
-          await client.chat.postMessage({
-            channel: pubChannel,
-            text: `${event.old_name} was renamed to ${event.new_name}.`,
-          });
-        await dbRun(
-          'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
-          rep1.ts,
-          num + 1,
-          'Emoji Changed'
-        );
-        logger.info('Updated Emoji Changed record');
+    if (event.subtype == 'add') {
+      if (event.value?.startsWith("alias")) {
+        messandstore(client, 'Emoji Alias Added', `:${event.name}: was added (alias of :${event.value.split(":")[1]}:)!`, privChannel, logger);
+        publicMessage(client, 'Emoji Alias Added', `:${event.name}: was added (alias of :${event.value.split(":")[1]}:)!`, pubChannel, logger);
+      } else {
+        messandstore(client, 'Emoji Added', `:${event.name}: was added!`, privChannel, logger);
+        publicMessage(client, 'Emoji Added', `:${event.name}: was added!`, pubChannel, logger);
       }
-      logger.info(event);
-    } catch (error) {
-      logger.error('Error handling message event', error);
+    } else if (event.subtype == 'remove') {
+      messandstore(client, 'Emoji Removed', `${event.names} was removed.`, privChannel, logger);
+      publicMessage(client, 'Emoji Removed', `${event.names} was removed.`, pubChannel, logger);
+    } else if (event.subtype == "rename") {
+      messandstore(client, 'Emoji Changed', `${event.old_name} was renamed to ${event.new_name}.`, privChannel, logger);
+      publicMessage(client, 'Emoji Changed', `${event.old_name} was renamed to ${event.new_name}.`, pubChannel, logger);
     }
   });
 
   app.event('dnd_updated_user', async ({ event, client, logger }) => {
-    try {
-      if (event.dnd_status.dnd_enabled) {
-        const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Dnd Set Active') as any;
-        const start = event.dnd_status.next_dnd_start_ts
+    if (event.dnd_status.dnd_enabled) {
+      const start = event.dnd_status.next_dnd_start_ts
           ? new Date(event.dnd_status.next_dnd_start_ts * 1000)
           : null;
-        const end = event.dnd_status.next_dnd_end_ts
-          ? new Date(event.dnd_status.next_dnd_end_ts * 1000)
-          : null;
-        const startStr = start ? start.toLocaleString() : 'unknown';
-        const endStr = end ? end.toLocaleString() : 'unknown';
-        const messagets = ts?.Messagets as string | undefined;
-        let num = Number(ts?.Number ?? 0);
-        const rep1 = await client.chat.postMessage({
-          channel: privChannel,
-          text: `<@${event.user}> has turned on their Do Not Disturb\nStarts: ${startStr}\nEnds: ${endStr}!`,
-          thread_ts: messagets,
-        });
-        await dbRun(
-          'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
-          rep1.ts,
-          num + 1,
-          'Dnd Set Active'
-        );
-        logger.info('Updated Dnd Set Active record');
-      } else if (event.dnd_status.dnd_enabled == false) {
-        const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Dnd Set Inactive') as any;
-        const messagets = ts?.Messagets as string | undefined;
-        let num = Number(ts?.Number ?? 0);
-        const rep1 = await client.chat.postMessage({
-          channel: privChannel,
-          text: `<@${event.user}> has turned off their Do Not Disturb.`,
-          thread_ts: messagets,
-        });
-        await dbRun(
-          'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
-          rep1.ts,
-          num + 1,
-          'Dnd Set Inactive'
-        );
-        logger.info('Updated Dnd Set Inactive record');
-      }
-    } catch (error) {
-      logger.error('Error handling message event', error);
+      const end = event.dnd_status.next_dnd_end_ts
+        ? new Date(event.dnd_status.next_dnd_end_ts * 1000)
+        : null;
+      const startStr = start ? start.toLocaleString() : 'unknown';
+      const endStr = end ? end.toLocaleString() : 'unknown';
+      messandstore(client, 'Dnd Set Active', `<@${event.user}> has turned on their Do Not Disturb\nStarts: ${startStr}\nEnds: ${endStr}!`, privChannel, logger);
+    } else if (event.dnd_status.dnd_enabled == false) {
+      messandstore(client, 'Dnd Set Inactive', `<@${event.user}> has turned off their Do Not Disturb.`, privChannel, logger);
     }
   });
 
   app.event('user_huddle_changed', async ({ event, client, logger }) => {
-    try {
-      if (event.user.profile.huddle_state == "in_a_huddle") {
-        const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Huddle Joined') as any;
-        const callId = (event.user.profile as any).huddle_state_call_id;
-        const callInfo = callId ? ` (call ID: \`${callId}\`)` : "";
-        const messagets = ts?.Messagets as string | undefined;
-        let num = Number(ts?.Number ?? 0);
-        const rep1 = await client.chat.postMessage({
-          channel: privChannel,
-          text: `<@${event.user.id}> has joined a huddle ${callInfo}!`,
-          thread_ts: messagets,
-        });
-        await dbRun(
-          'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
-          rep1.ts,
-          num + 1,
-          'Huddle Joined'
-        );
-        logger.info('Updated Huddle Joined record');
-      } else {
-        const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Huddle Left') as any;
-        let num = Number(ts?.Number ?? 0);
-        const messagets = ts?.Messagets as string | undefined;
-        const rep1 = await client.chat.postMessage({
-          channel: privChannel,
-          text: `<@${event.user.id}> has left a huddle.`,
-          thread_ts: messagets,
-        });
-        await dbRun(
-          'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
-          rep1.ts,
-          num + 1,
-          'Huddle Left'
-        );
-        logger.info('Updated Huddle Left record');
-      }
-    } catch (error) {
-      logger.error('Error handling message event', error);
+    if (event.user.profile.huddle_state == "in_a_huddle") {
+      const callId = (event.user.profile as any).huddle_state_call_id;
+      const callInfo = callId ? ` (call ID: \`${callId}\`)` : "";
+      messandstore(client, 'Huddle Joined', `<@${event.user.id}> has joined a huddle ${callInfo}!`, privChannel, logger);
+    } else {
+      messandstore(client, 'Huddle Left', `<@${event.user.id}> has left a huddle.`, privChannel, logger);
     }
   });
 
   app.event('file_created', async ({ event, client, logger }) => {
-    try {
-      const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'File Created') as any;
-      const fileid = event.file.id;
-      const messagets = ts?.Messagets as string | undefined;
-      let num = Number(ts?.Number ?? 0);
-      const rep1 = await client.chat.postMessage({
-        channel: privChannel,
-        text: `File ${fileid} has been created.`,
-        thread_ts: messagets,
-      });
-      await dbRun(
-        'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
-        rep1.ts,
-        num + 1,
-        'File Created'
-      );
-      logger.info('Updated File Created record');
-    } catch (error) {
-      logger.error('Error handling message event', error);
-    }
+    const fileid = event.file.id;
+    messandstore(client, 'File Created', `File ${fileid} has been created.`, privChannel, logger);
   });
 
   app.event('file_shared', async ({ event, client, logger }) => {
@@ -725,120 +350,42 @@ const register = (app: App) => {
         return;
       }
 
-      const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'File Shared') as any;
-      const fileid = event.file.id;
-      const messagets = ts?.Messagets as string | undefined;
-      let num = Number(ts?.Number ?? 0);
-      const rep1 = await client.chat.postMessage({
-        channel: privChannel,
-        text: `File ${fileid} has been shared. Details:\n
-        Channel: <#${event.channel_id}>\n
-        User: <@${event.user_id}>
-        `,
-        thread_ts: messagets,
+      const chaninfo = await client.conversations.info({
+        channel: event.channel_id
       });
-      await dbRun(
-        'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
-        rep1.ts,
-        num + 1,
-        'File Shared'
-      );
-      logger.info('Updated File Shared record');
+
+      if (chaninfo.channel?.is_private || chaninfo.channel?.is_mpim || chaninfo.channel?.is_im || chaninfo.channel?.is_group) {
+        return;
+      }
+
+      const fileid = event.file.id;
+      messandstore(client, 'File Shared', `File ${fileid} has been shared. Details:\n
+        Channel: <#${event.channel_id}>\n
+        User: <@${event.user_id}>`, 
+      privChannel, logger);
     } catch (error) {
       logger.error('Error handling message event', error);
     }
   });
 
   app.event('file_change', async ({ event, client, logger }) => {
-    try {
-      const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'File Changed') as any;
-      const fileid = event.file.id;
-      const messagets = ts?.Messagets as string | undefined;
-      let num = Number(ts?.Number ?? 0);
-      const rep1 = await client.chat.postMessage({
-        channel: privChannel,
-        text: `File ${fileid} has been changed.`,
-        thread_ts: messagets,
-      });
-      await dbRun(
-        'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
-        rep1.ts,
-        num + 1,
-        'File Changed'
-      );
-      logger.info('Updated File Changed record');
-    } catch (error) {
-      logger.error('Error handling message event', error);
-    }
+    const fileid = event.file.id;
+    messandstore(client, 'File Changed', `File ${fileid} has been changed.`, privChannel, logger);
   });
 
   app.event('file_deleted', async ({ event, client, logger }) => {
-    try {
-      const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'File Deleted') as any;
-      const fileid = event.file_id;
-      const messagets = ts?.Messagets as string | undefined;
-      let num = Number(ts?.Number ?? 0);
-      const rep1 = await client.chat.postMessage({
-        channel: privChannel,
-        text: `File ${fileid} has been deleted.`,
-        thread_ts: messagets,
-      });
-      await dbRun(
-        'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
-        rep1.ts,
-        num + 1,
-        'File Deleted'
-      );
-      logger.info('Updated File Deleted record');
-    } catch (error) {
-      logger.error('Error handling message event', error);
-    }
+    const fileid = event.file.id;
+    messandstore(client, 'File Deleted', `File ${fileid} has been deleted.`, privChannel, logger);
   });
 
   app.event('file_public', async ({ event, client, logger }) => {
-    try {
-      const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'File Public') as any;
-      const fileid = event.file.id;
-      const messagets = ts?.Messagets as string | undefined;
-      let num = Number(ts?.Number ?? 0);
-      const rep1 = await client.chat.postMessage({
-        channel: privChannel,
-        text: `File ${fileid} has been made public.`,
-        thread_ts: messagets,
-      });
-      await dbRun(
-        'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
-        rep1.ts,
-        num + 1,
-        'File Public'
-      );
-      logger.info('Updated File Public record');
-    } catch (error) {
-      logger.error('Error handling message event', error);
-    }
+    const fileid = event.file.id;
+    messandstore(client, 'File Public', `File ${fileid} has been made public.`, privChannel, logger);
   });
 
   app.event('file_unshared', async ({ event, client, logger }) => {
-    try {
-      const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'File Unshared') as any;
-      const fileid = event.file.id;
-      const messagets = ts?.Messagets as string | undefined;
-      let num = Number(ts?.Number ?? 0);
-      const rep1 = await client.chat.postMessage({
-        channel: privChannel,
-        text: `File ${fileid} has been unshared.`,
-        thread_ts: messagets,
-      });
-      await dbRun(
-        'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
-        rep1.ts,
-        num + 1,
-        'File Unshared'
-      );
-      logger.info('Updated File Unshared record');
-    } catch (error) {
-      logger.error('Error handling message event', error);
-    }
+    const fileid = event.file.id;
+    messandstore(client, 'File Unshared', `File ${fileid} has been unshared.`, privChannel, logger);
   });
 
   app.event('user_change', async ({ event, client, logger }: { event: any, client: any, logger: any }) => {
@@ -849,337 +396,71 @@ const register = (app: App) => {
         const existingObject = JSON.parse(exist.userobject);
         
         if (existingObject.name != event.user.name) {
-          const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Username Changed') as any;
-          const messagets = ts?.Messagets as string | undefined;
-          let num = Number(ts?.Number ?? 0);
-          const rep1 = await client.chat.postMessage({
-            channel: privChannel,
-            text: `User <@${event.user.id}> has changed their username from ${existingObject.name} to ${event.user.name}.`,
-            thread_ts: messagets,
-          });
-          await dbRun(
-            'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
-            rep1.ts,
-            num + 1,
-            'Username Changed'
-          );
-          logger.info('Updated Username Changed record');
+          messandstore(client, 'Username Changed', `User <@${event.user.id}> has changed their username from ${existingObject.name} to ${event.user.name}.`, privChannel, logger);
         }
         if (existingObject.profile.real_name != event.user.profile.real_name) {
-          const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Real Name Changed') as any;
-          const messagets = ts?.Messagets as string | undefined;
-          let num = Number(ts?.Number ?? 0);
-          const rep1 = await client.chat.postMessage({
-            channel: privChannel,
-            text: `User <@${event.user.id}> has changed their real name from ${existingObject.profile.real_name} (${existingObject.profile.real_name_normalized}) to ${event.user.profile.real_name} (${event.user.profile.real_name_normalized}).`,
-            thread_ts: messagets,
-          });
-          await dbRun(
-            'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
-            rep1.ts,
-            num + 1,
-            'Real Name Changed'
-          );
-          logger.info('Updated Real Name Changed record');
+          messandstore(client, 'Real Name Changed', `User <@${event.user.id}> has changed their real name from ${existingObject.profile.real_name} (${existingObject.profile.real_name_normalized}) to ${event.user.profile.real_name} (${event.user.profile.real_name_normalized}).`, privChannel, logger);
         }
         if (existingObject.profile.display_name != event.user.profile.display_name) {
-          const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Display Name Changed') as any;
-          const messagets = ts?.Messagets as string | undefined;
-          let num = Number(ts?.Number ?? 0);
-          const rep1 = await client.chat.postMessage({
-            channel: privChannel,
-            text: `User <@${event.user.id}> has changed their display name from ${existingObject.profile.display_name} (${existingObject.profile.display_name_normalized}) to ${event.user.profile.display_name} (${event.user.profile.display_name_normalized}).`,
-            thread_ts: messagets,
-          });
-          await dbRun(
-            'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
-            rep1.ts,
-            num + 1,
-            'Display Name Changed'
-          );
-          logger.info('Updated Display Name Changed record');
+          messandstore(client, 'Display Name Changed', `User <@${event.user.id}> has changed their display name from ${existingObject.profile.display_name} (${existingObject.profile.display_name_normalized}) to ${event.user.profile.display_name} (${event.user.profile.display_name_normalized}).`, privChannel, logger);
         }
         if (existingObject.deleted != event.user.deleted) {  
           if (event.user.deleted) {
-            const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'User Deactivated') as any;
-            const messagets = ts?.Messagets as string | undefined;
-            let num = Number(ts?.Number ?? 0);
-            const rep1 = await client.chat.postMessage({
-              channel: privChannel,
-              text: `User <@${event.user.id}> has been deactivated.`,
-              thread_ts: messagets,
-            });
-            await dbRun(
-              'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
-              rep1.ts,
-              num + 1,
-              'User Deactivated'
-            );
-            logger.info('Updated User Deactivated record');
+            messandstore(client, 'User Deactivated', `User <@${event.user.id}> has been deactivated.`, privChannel, logger);
+            publicMessage(client, 'User Deactivated', `User <@${event.user.id}> has been deactivated.`, pubChannel, logger);
           } else {
-            const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'User Reactivated') as any;
-            const messagets = ts?.Messagets as string | undefined;
-            let num = Number(ts?.Number ?? 0);
-            const rep1 = await client.chat.postMessage({
-              channel: privChannel,
-              text: `User <@${event.user.id}> has been reactivated.`,
-              thread_ts: messagets,
-            });
-            await dbRun(
-              'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
-              rep1.ts,
-              num + 1,
-              'User Reactivated'
-            );
-            logger.info('Updated User Reactivated record');
+            messandstore(client, 'User Reactivated', `User <@${event.user.id}> has been reactivated.`, privChannel, logger);
+            publicMessage(client, 'User Reactivated', `User <@${event.user.id}> has been reactivated.`, pubChannel, logger);
           }
         }
-        if (existingObject.is_admin != event.user.is_admin) {
+        if (existingObject.is_admin != event.user.is_admin && event.user.deleted == false) {
           if (event.user.is_admin) {
-            const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'User Become Admin') as any;
-            const messagets = ts?.Messagets as string | undefined;
-            let num = Number(ts?.Number ?? 0);
-            const rep1 = await client.chat.postMessage({
-              channel: privChannel,
-              text: `User <@${event.user.id}> has become an admin.`,
-              thread_ts: messagets,
-            });
-            await dbRun(
-              'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
-              rep1.ts,
-              num + 1,
-              'User Become Admin'
-            );
-            logger.info('Updated User Become Admin record');
+            messandstore(client, 'User Become Admin', `User <@${event.user.id}> has become an admin.`, privChannel, logger);
           } else {
-            const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Removed Admin') as any;
-            const messagets = ts?.Messagets as string | undefined;
-            let num = Number(ts?.Number ?? 0);
-            const rep1 = await client.chat.postMessage({
-              channel: privChannel,
-              text: `User <@${event.user.id}> has been removed as an admin.`,
-              thread_ts: messagets,
-            });
-            await dbRun(
-              'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
-              rep1.ts,
-              num + 1,
-              'Removed Admin'
-            );
-            logger.info('Updated Removed Admin record');
+            messandstore(client, 'Removed Admin', `User <@${event.user.id}> has been removed as an admin.`, privChannel, logger);
           }
         }
-        if (existingObject.is_owner != event.user.is_owner || existingObject.is_primary_owner != event.user.is_primary_owner) {
+        if ((existingObject.is_owner != event.user.is_owner || existingObject.is_primary_owner != event.user.is_primary_owner) && event.user.deleted == false) {
           if (event.user.is_owner || event.user.is_primary_owner) {
-            const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'User Become Owner') as any;
-            const messagets = ts?.Messagets as string | undefined;
-            let num = Number(ts?.Number ?? 0);
-            const rep1 = await client.chat.postMessage({
-              channel: privChannel,
-              text: `User <@${event.user.id}> has become an owner.`,
-              thread_ts: messagets,
-            });
-            await dbRun(
-              'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
-              rep1.ts,
-              num + 1,
-              'User Become Owner'
-            );
-            logger.info('Updated User Become Owner record');
+            messandstore(client, 'User Become Owner', `User <@${event.user.id}> has become an owner.`, privChannel, logger);
           } else {
-            const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Removed Owner') as any;
-            const messagets = ts?.Messagets as string | undefined;
-            let num = Number(ts?.Number ?? 0);
-            const rep1 = await client.chat.postMessage({
-              channel: privChannel,
-              text: `User <@${event.user.id}> has been removed as an owner.`,
-              thread_ts: messagets,
-            });
-            await dbRun(
-              'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
-              rep1.ts,
-              num + 1,
-              'Removed Owner'
-            );
-            logger.info('Updated Removed Owner record');
+            messandstore(client, 'Removed Owner', `User <@${event.user.id}> has been removed as an owner.`, privChannel, logger);
           }
         }
-        if (existingObject.is_restricted != event.user.is_restricted) {
+        if (existingObject.is_restricted != event.user.is_restricted && event.user.deleted == false) {
           if (event.user.is_restricted) {
-            const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Change to MCG') as any;
-            const messagets = ts?.Messagets as string | undefined;
-            let num = Number(ts?.Number ?? 0);
-            const rep1 = await client.chat.postMessage({
-              channel: privChannel,
-              text: `User <@${event.user.id}> has become an Multi-Channel Guest.`,
-              thread_ts: messagets,
-            });
-            await dbRun(
-              'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
-              rep1.ts,
-              num + 1,
-              'Change to MCG'
-            );
-            logger.info('Updated Change to MCG record');
+            messandstore(client, 'Change to MCG', `User <@${event.user.id}> has become an Multi-Channel Guest.`, privChannel, logger);
+            publicMessage(client, 'Change to MCG', `User <@${event.user.id}> has become an Multi-Channel Guest.`, pubChannel, logger);
           } else {
-            const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Change to User') as any;
-            const messagets = ts?.Messagets as string | undefined;
-            let num = Number(ts?.Number ?? 0);
-            const rep1 = await client.chat.postMessage({
-              channel: privChannel,
-              text: `User <@${event.user.id}> has become a member.`,
-              thread_ts: messagets,
-            });
-            await dbRun(
-              'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
-              rep1.ts,
-              num + 1,
-              'Change to User'
-            );
-            logger.info('Updated Change to User record');
+            messandstore(client, 'Change to User', `User <@${event.user.id}> has become a member.`, privChannel, logger);
           }
         }
-        if (existingObject.is_ultra_restricted != event.user.is_ultra_restricted) {
+        if (existingObject.is_ultra_restricted != event.user.is_ultra_restricted && event.user.deleted == false) {
           if (event.user.is_ultra_restricted) {
-            const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Change to SCG') as any;
-            const messagets = ts?.Messagets as string | undefined;
-            let num = Number(ts?.Number ?? 0);
-            const rep1 = await client.chat.postMessage({
-              channel: privChannel,
-              text: `User <@${event.user.id}> has become a Single-Channel Guest.`,
-              thread_ts: messagets,
-            });
-            await dbRun(
-              'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
-              rep1.ts,
-              num + 1,
-              'Change to SCG'
-            );
-            logger.info('Updated Change to SCG record');
+            messandstore(client, 'Change to SCG', `User <@${event.user.id}> has become an Single-Channel Guest.`, privChannel, logger);
           } else {
-            const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Change to User') as any;
-            const messagets = ts?.Messagets as string | undefined;
-            let num = Number(ts?.Number ?? 0);
-            const rep1 = await client.chat.postMessage({
-              channel: privChannel,
-              text: `User <@${event.user.id}> has become a member.`,
-              thread_ts: messagets,
-            });
-            await dbRun(
-              'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
-              rep1.ts,
-              num + 1,
-              'Change to User'
-            );
-            logger.info('Updated Change to User record');
+            messandstore(client, 'Change to User', `User <@${event.user.id}> has become a member.`, privChannel, logger);
           }
         }
         if (existingObject.profile.pronouns != event.user.profile.pronouns) {
-          const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Pronouns Changed') as any;
-          const messagets = ts?.Messagets as string | undefined;
-          let num = Number(ts?.Number ?? 0);
-          const rep1 = await client.chat.postMessage({
-            channel: privChannel,
-            text: `User <@${event.user.id}> changed their pronouns from ${existingObject.profile.pronouns} to ${event.user.profile.pronouns}.`,
-            thread_ts: messagets,
-          });
-          await dbRun(
-            'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
-            rep1.ts,
-            num + 1,
-            'Pronouns Changed'
-          );
-          logger.info('Updated Pronouns Changed record');
+          messandstore(client, 'Pronouns Changed', `User <@${event.user.id}> changed their pronouns from ${existingObject.profile.pronouns} to ${event.user.profile.pronouns}.`, privChannel, logger);
         }
         if (existingObject.profile.email != event.user.profile.email) {
-          const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Emails Changed') as any;
-          const messagets = ts?.Messagets as string | undefined;
-          let num = Number(ts?.Number ?? 0);
-          const rep1 = await client.chat.postMessage({
-            channel: privChannel,
-            text: `User <@${event.user.id}> changed their email from ${existingObject.profile.email} to ${event.user.profile.email}.`,
-            thread_ts: messagets,
-          });
-          await dbRun(
-            'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
-            rep1.ts,
-            num + 1,
-            'Emails Changed'
-          );
-          logger.info('Updated Emails Changed record');
+          messandstore(client, 'Emails Changed', `User <@${event.user.id}> changed their email from ${existingObject.profile.email} to ${event.user.profile.email}.`, privChannel, logger);
         }
         if (existingObject.profile.title != event.user.profile.title) {
-          const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Title Changed') as any;
-          const messagets = ts?.Messagets as string | undefined;
-          let num = Number(ts?.Number ?? 0);
-          const rep1 = await client.chat.postMessage({
-            channel: privChannel,
-            text: `User <@${event.user.id}> changed their title from ${existingObject.profile.title} to ${event.user.profile.title}.`,
-            thread_ts: messagets,
-          });
-          await dbRun(
-            'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
-            rep1.ts,
-            num + 1,
-            'Title Changed'
-          );
-          logger.info('Updated Title Changed record');
+          messandstore(client, 'Title Changed', `User <@${event.user.id}> changed their title from ${existingObject.profile.title} to ${event.user.profile.title}.`, privChannel, logger);
         }
         if (existingObject.profile.phone != event.user.profile.phone) {
-          const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Phone Number Changed') as any;
-          const messagets = ts?.Messagets as string | undefined;
-          let num = Number(ts?.Number ?? 0);
-          const rep1 = await client.chat.postMessage({
-            channel: privChannel,
-            text: `User <@${event.user.id}> changed their phone number from ${existingObject.profile.phone} to ${event.user.profile.phone}.`,
-            thread_ts: messagets,
-          });
-          await dbRun(
-            'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
-            rep1.ts,
-            num + 1,
-            'Phone Number Changed'
-          );
-          logger.info('Updated Phone Number Changed record');
+          messandstore(client, 'Phone Number Changed', `User <@${event.user.id}> changed their phone number from ${existingObject.profile.phone} to ${event.user.profile.phone}.`, privChannel, logger);
         }
         if (existingObject.profile.start_date != event.user.profile.start_date) {
-          const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Start Date Changed') as any;
-          const messagets = ts?.Messagets as string | undefined;
-          let num = Number(ts?.Number ?? 0);
-          const rep1 = await client.chat.postMessage({
-            channel: privChannel,
-            text: `User <@${event.user.id}> changed their start date from ${existingObject.profile.start_date} to ${event.user.profile.start_date}.`,
-            thread_ts: messagets,
-          });
-          await dbRun(
-            'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
-            rep1.ts,
-            num + 1,
-            'Start Date Changed'
-          );
-          logger.info('Updated Start Date Changed record');
+          messandstore(client, 'Start Date Changed', `User <@${event.user.id}> changed their start date from ${existingObject.profile.start_date} to ${event.user.profile.start_date}.`, privChannel, logger);
         }
         if (existingObject.profile.tz != event.user.profile.tz) {
-          const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Timezone Changed') as any;
-          const messagets = ts?.Messagets as string | undefined;
-          let num = Number(ts?.Number ?? 0);
-          const rep1 = await client.chat.postMessage({
-            channel: privChannel,
-            text: `User <@${event.user.id}> changed their timezone from ${existingObject.profile.tz} (${existingObject.profile.tz_label}) to ${event.user.profile.tz} (${event.user.profile.tz_label}).`,
-            thread_ts: messagets,
-          });
-          await dbRun(
-            'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
-            rep1.ts,
-            num + 1,
-            'Timezone Changed'
-          );
-          logger.info('Updated Timezone Changed record');
+          messandstore(client, 'Timezone Changed', `User <@${event.user.id}> changed their timezone from ${existingObject.profile.tz} (${existingObject.profile.tz_label}) to ${event.user.profile.tz} (${event.user.profile.tz_label}).`, privChannel, logger);
         }
         if (existingObject.profile.avatar_hash != event.user.profile.avatar_hash) {
-          const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Profile Image Change') as any;
-          const messagets = ts?.Messagets as string | undefined;
-          let num = Number(ts?.Number ?? 0);
           const newImage = event.user.profile.image_original 
               || event.user.profile.image_512 
               || event.user.profile.image_192;
@@ -1187,105 +468,16 @@ const register = (app: App) => {
           const oldImage = existingObject.profile.image_original 
                         || existingObject.profile.image_512 
                         || "No previous image";
-          const rep1 = await client.chat.postMessage({
-            channel: privChannel,
-            text: `User <@${event.user.id}> changed their profile image from ${oldImage} to ${newImage}.`,
-            thread_ts: messagets,
-          });
-          await dbRun(
-            'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
-            rep1.ts,
-            num + 1,
-            'Profile Image Change'
-          );
-          logger.info('Updated Profile Image Change record');
+          messandstore(client, 'Profile Image Change', `User <@${event.user.id}> changed their profile image from ${oldImage} to ${newImage}.`, privChannel, logger);
         }
         if (existingObject.profile.status_text != event.user.profile.status_text) {
-          const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Status Text Changed') as any;
-          const messagets = ts?.Messagets as string | undefined;
-          let num = Number(ts?.Number ?? 0);
-          const rep1 = await client.chat.postMessage({
-            channel: privChannel,
-            text: `User <@${event.user.id}> changed their status text from ${existingObject.profile.status_text} to ${event.user.profile.status_text}.`,
-            thread_ts: messagets,
-          });
-          await dbRun(
-            'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
-            rep1.ts,
-            num + 1,
-            'Status Text Changed'
-          );
-          logger.info('Updated Status Text Changed record');
+          messandstore(client, 'Status Text Changed', `User <@${event.user.id}> changed their status text from ${existingObject.profile.status_text} to ${event.user.profile.status_text}.`, privChannel, logger);
         }
         if (existingObject.profile.status_emoji != event.user.profile.status_emoji) {
-          const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Status Emoji Changed') as any;
-          const messagets = ts?.Messagets as string | undefined;
-          let num = Number(ts?.Number ?? 0);
-          const rep1 = await client.chat.postMessage({
-            channel: privChannel,
-            text: `User <@${event.user.id}> changed their status emoji from ${existingObject.profile.status_emoji} to ${event.user.profile.status_emoji}.`,
-            thread_ts: messagets,
-          });
-          await dbRun(
-            'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
-            rep1.ts,
-            num + 1,
-            'Status Emoji Changed'
-          );
-          logger.info('Updated Status Emoji Changed record');
+          messandstore(client, 'Status Emoji Changed', `User <@${event.user.id}> changed their status emoji from ${existingObject.profile.status_emoji} to ${event.user.profile.status_emoji}.`, privChannel, logger);
         }
         if (existingObject.profile.status_expiration != event.user.profile.status_expiration) {
-          const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'Status Expiration Changed') as any;
-          const messagets = ts?.Messagets as string | undefined;
-          let num = Number(ts?.Number ?? 0);
-          const rep1 = await client.chat.postMessage({
-            channel: privChannel,
-            text: `User <@${event.user.id}> changed their status expiration from ${existingObject.profile.status_expiration} to ${event.user.profile.status_expiration}.`,
-            thread_ts: messagets,
-          });
-          await dbRun(
-            'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
-            rep1.ts,
-            num + 1,
-            'Status Expiration Changed'
-          );
-          logger.info('Updated Status Expiration Changed record');
-        }
-
-        if (existingObject.enterprise_user.teams !== event.user.enterprise_user.teams) {
-          if (event.user.enterprise_user.teams.contains("T0266FRGM")) {
-            const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'User Added to Workspace') as any;
-            const messagets = ts?.Messagets as string | undefined;
-            let num = Number(ts?.Number ?? 0);
-            const rep1 = await client.chat.postMessage({
-              channel: privChannel,
-              text: `User <@${event.user.id}> was added to the workspace.`,
-              thread_ts: messagets,
-            });
-            await dbRun(
-              'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
-              rep1.ts,
-              num + 1,
-              'User Added to Workspace'
-            );
-            logger.info('Updated User Added to Workspace record');
-          } else {
-            const ts = await dbGet('SELECT * FROM Data WHERE Field = ?', 'User Deleted from Workspace') as any;
-            const messagets = ts?.Messagets as string | undefined;
-            let num = Number(ts?.Number ?? 0);
-            const rep1 = await client.chat.postMessage({
-              channel: privChannel,
-              text: `User <@${event.user.id}> was removed from the workspace.`,
-              thread_ts: messagets,
-            });
-            await dbRun(
-              'UPDATE Data SET Messagets = ?, Number = ? WHERE Field = ?',
-              rep1.ts,
-              num + 1,
-              'User Deleted from Workspace'
-            );
-            logger.info('Updated User Deleted from Workspace record');
-          }
+          messandstore(client, 'Status Expiration Changed', `User <@${event.user.id}> changed their status expiration from ${existingObject.profile.status_expiration} to ${event.user.profile.status_expiration}.`, privChannel, logger);
         }
 
         const userObject = JSON.stringify(event.user);
@@ -1294,6 +486,7 @@ const register = (app: App) => {
           event.user.id,
           userObject
         );
+        logger.info(`Updated user object in database for user ${event.user.id}`);
       } else {
         const userObject = JSON.stringify(event.user);
         await dbRun(
@@ -1301,9 +494,20 @@ const register = (app: App) => {
           event.user.id,
           userObject
         );
+        logger.info(`Inserted new user object in database for user ${event.user.id}`);
       }
     } catch (error) {
-      logger.error('Error handling message event', error);
+      logger.error('Error handling user_change event:', error);
+      logger.error(`Failed to update database for user ${event.user?.id}`);
+      
+      try {
+        await client.chat.postMessage({
+          channel: privChannel,
+          text: `⚠️ *Database Error*\nFailed to update user <@${event.user?.id}>\n\`\`\`${error}\`\`\``,
+        });
+      } catch (slackError) {
+        logger.error('Failed to send error notification to Slack:', slackError);
+      }
     }
   });
 };

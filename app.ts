@@ -217,12 +217,20 @@ cron.schedule('0 * * * *', async () => {
     channel: privChannel,
     text: `User groups added: `,
   });
+  const rep50 = await app.client.chat.postMessage({
+    channel: pubChannel,
+    text: `User groups added: `,
+  });
   const rep9 = await app.client.chat.postMessage({
     channel: privChannel,
     text: `User groups modified: `,
   });
   const rep10 = await app.client.chat.postMessage({
     channel: privChannel,
+    text: `User groups deleted: `,
+  });
+  const rep51 = await app.client.chat.postMessage({
+    channel: pubChannel,
     text: `User groups deleted: `,
   });
   const rep11 = await app.client.chat.postMessage({
@@ -313,8 +321,16 @@ cron.schedule('0 * * * *', async () => {
     channel: privChannel,
     text: `User deactivated: `,
   });
+  const rep53 = await app.client.chat.postMessage({
+    channel: pubChannel,
+    text: `User deactivated: `,
+  });
   const rep47 = await app.client.chat.postMessage({
     channel: privChannel,
+    text: `User reactivated: `,
+  });
+  const rep54 = await app.client.chat.postMessage({
+    channel: pubChannel,
     text: `User reactivated: `,
   });
   const rep29 = await app.client.chat.postMessage({
@@ -335,15 +351,19 @@ cron.schedule('0 * * * *', async () => {
   });
   const rep31 = await app.client.chat.postMessage({
     channel: privChannel,
-    text: `Change to MCG: `,
+    text: `User changed to MCG: `,
+  });
+  const rep55 = await app.client.chat.postMessage({
+    channel: pubChannel,
+    text: `User changed to MCG: `,
   });
   const rep32 = await app.client.chat.postMessage({
     channel: privChannel,
-    text: `Change to SCG: `,
+    text: `User changed to SCG: `,
   });
   const rep44 = await app.client.chat.postMessage({
     channel: privChannel,
-    text: `Change to member: `,
+    text: `User changed to member: `,
   });
   const rep33 = await app.client.chat.postMessage({
     channel: privChannel,
@@ -384,14 +404,6 @@ cron.schedule('0 * * * *', async () => {
   const rep43 = await app.client.chat.postMessage({
     channel: privChannel,
     text: `Profile image changed: `,
-  });
-  const rep48 = await app.client.chat.postMessage({
-    channel: privChannel,
-    text: `User added to workspace: `,
-  });
-  const rep49 = await app.client.chat.postMessage({
-    channel: privChannel,
-    text: `User removed from workspace: `,
   });
   const airtablePayload = [
     {
@@ -461,7 +473,8 @@ cron.schedule('0 * * * *', async () => {
       fields: { 
         "Field": "Subteam Added", 
         "Messagets": rep8.ts,
-        "Number": 0
+        "Number": 0,
+        "PubMes": rep50.ts,
       }
     },
     {
@@ -482,7 +495,8 @@ cron.schedule('0 * * * *', async () => {
       fields: { 
         "Field": "Subteam Deleted", 
         "Messagets": rep10.ts,
-        "Number": 0
+        "Number": 0,
+        "PubMes": rep51.ts,
       }
     },
     {
@@ -612,14 +626,16 @@ cron.schedule('0 * * * *', async () => {
       fields: {
         "Field": "User Deactivated",
         "Messagets": rep28.ts,
-        "Number": 0
+        "Number": 0,
+        "PubMes": rep53.ts,
       }
     },
     {
       fields: {
         "Field": "User Reactivated",
         "Messagets": rep47.ts,
-        "Number": 0
+        "Number": 0,
+        "PubMes": rep54.ts,
       }
     },
     {
@@ -654,7 +670,8 @@ cron.schedule('0 * * * *', async () => {
       fields: {
         "Field": "Change to MCG",
         "Messagets": rep31.ts,
-        "Number": 0
+        "Number": 0,
+        "PubMes": rep55.ts,
       }
     },
     {
@@ -740,21 +757,7 @@ cron.schedule('0 * * * *', async () => {
         "Messagets": rep43.ts,
         "Number": 0
       }
-    },
-    {
-      fields: {
-        "Field": "User Added to Workspace",
-        "Messagets": rep48.ts,
-        "Number": 0
-      }
-    },
-    {
-      fields: {
-        "Field": "User Deleted from Workspace",
-        "Messagets": rep49.ts,
-        "Number": 0
-      }
-    },
+    }
   ];
   for (const payload of airtablePayload) {
     await dbRun(
@@ -790,9 +793,6 @@ const intervalJob = setInterval(async () => {
     clearInterval(intervalJob);
     return;
   }
-
-  // FORCE the type here using 'as' or a String cast
-  // Slack's .list expects (string | undefined)
   let currentCursor: string | undefined = state?.cursor ? String(state.cursor) : undefined;
   
   try {
