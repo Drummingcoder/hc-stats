@@ -147,6 +147,14 @@ cron.schedule('0 * * * *', async () => {
       number: 0,
       channel: privChannel
     });
+    if (thread.field == "Subteam Changed") {
+      airtablePayload.push({
+        field: "Subteam Members Changed",
+        ts: rep.ts,
+        number: 0,
+        channel: privChannel
+      });
+    }
   }
 
   for (const payload of airtablePayload) {
