@@ -76,8 +76,6 @@ cron.schedule('0 * * * *', async () => {
     Status emoji changed: ${recordMap["Status Emoji Changed"]?.Number ?? 0}\n
     Status expiration changed: ${recordMap["Status Expiration Changed"]?.Number ?? 0}\n
     Profile image changed: ${recordMap["Profile Image Change"]?.Number ?? 0}\n
-    User added to workspace: ${recordMap["User Added to Workspace"]?.Number ?? 0}\n
-    User removed from workspace: ${recordMap["User Deleted from Workspace"]?.Number ?? 0}\n
     `;
   await app.client.chat.postMessage({
     channel: privChannel,
@@ -136,23 +134,6 @@ cron.schedule('0 * * * *', async () => {
     {field: 'Status Expiration Changed', text: `Status expiration changed: `},
     {field: 'Profile Image Change', text: `Profile image changed: `}
   ];
-  const pubthreads = [
-    {field: 'New Bot', text: `New bots for today: `},
-    {field: 'Channel Created', text: `Channels created: `},
-    {field: 'Channel Archived', text: `Channels archived: `},
-    {field: 'Channel Deleted', text: `Channels deleted: `},
-    {field: 'Channel Unarchived', text: `Channels unarchived: `},
-    {field: 'Channel Renamed', text: `Channels renamed: `},
-    {field: 'Subteam Added', text: `User groups added: `},
-    {field: 'Subteam Deleted', text: `User groups deleted: `},
-    {field: 'Emoji Added', text: `Emojis added: `},
-    {field: 'Emoji Alias Added', text: `Emoji aliases added: `},
-    {field: 'Emoji Changed', text: `Emojis edited: `},
-    {field: 'Emoji Removed', text: `Emojis removed: `},
-    {field: 'User Deactivated', text: `User deactivated: `},
-    {field: 'User Reactivated', text: `User reactivated: `},
-    {field: 'Change to MCG', text: `User changed to MCG: `}
-  ];
 
   const airtablePayload: { field: string; ts: any; number: number; channel: string; PubMes?: any}[] = [];
   for (const thread of privthreads) {
@@ -160,19 +141,11 @@ cron.schedule('0 * * * *', async () => {
       channel: privChannel,
       text: thread.text,
     });
-    let repPub: { ts?: any; } | undefined = undefined;
-    if (pubthreads.find(t => t.field === thread.field)) {
-      repPub = await app.client.chat.postMessage({
-        channel: pubChannel,
-        text: thread.text,
-      });
-    }
     airtablePayload.push({
       field: thread.field,
       ts: rep.ts,
       number: 0,
-      channel: privChannel,
-      PubMes: repPub ? repPub.ts : undefined,
+      channel: privChannel
     });
   }
 
