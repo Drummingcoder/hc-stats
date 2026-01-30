@@ -161,14 +161,14 @@ const register = (app: App) => {
 
   app.event('channel_created', async ({ event, client, logger }) => {
     const user = await client.users.info({ user: event.channel.creator });
-    messandstore(client, 'Channel Created', `<#${event.channel.id}> (${event.channel.name}) by @${user.user.profile?.display_name || user.user.profile.real_name} (${event.channel.creator}) has been created.`, privChannel, logger);
-    publicMessage(client, 'Channel Created', `<#${event.channel.id}> (${event.channel.name}) by @${user.user.profile?.display_name || user.user.profile.real_name} (${event.channel.creator}) has been created.`, pubChannel, logger);
+    messandstore(client, 'Channel Created', `<#${event.channel.id}> (${event.channel.name}) by <@${event.channel.creator}> has been created.`, privChannel, logger);
+    publicMessage(client, 'Channel Created', `<#${event.channel.id}> (${event.channel.name}) by @${user.user?.profile?.display_name || user.user?.profile?.real_name || 'Unknown User'} (${event.channel.creator}) has been created.`, pubChannel, logger);
   });
 
   app.event('channel_archive', async ({ event, client, logger }) => {
     const user = await client.users.info({ user: event.user });
-    messandstore(client, 'Channel Archived', `<#${event.channel}> was archived by @${user.user.profile?.display_name || user.user.profile.real_name} (${event.user}).`, privChannel, logger);
-    publicMessage(client, 'Channel Archived', `<#${event.channel}> was archived by @${user.user.profile?.display_name || user.user.profile.real_name} (${event.user}).`, pubChannel, logger);
+    messandstore(client, 'Channel Archived', `<#${event.channel}> was archived by <@${event.user}>.`, privChannel, logger);
+    publicMessage(client, 'Channel Archived', `<#${event.channel}> was archived by @${user.user?.profile?.display_name || user.user?.profile?.real_name || 'Unknown User'} (${event.user}).`, pubChannel, logger);
   });
 
   app.event('channel_deleted', async ({ event, client, logger }) => {
@@ -183,8 +183,8 @@ const register = (app: App) => {
 
   app.event('channel_unarchive', async ({ event, client, logger }) => {
     const user = await client.users.info({ user: event.user });
-    messandstore(client, 'Channel Unarchived', `<#${event.channel}> was unarchived by @${user.user.profile?.display_name || user.user.profile.real_name} (${event.user}).`, privChannel, logger);
-    publicMessage(client, 'Channel Unarchived', `<#${event.channel}> was unarchived by @${user.user.profile?.display_name || user.user.profile.real_name} (${event.user}).`, pubChannel, logger);
+    messandstore(client, 'Channel Unarchived', `<#${event.channel}> was unarchived by <@${event.user}>.`, privChannel, logger);
+    publicMessage(client, 'Channel Unarchived', `<#${event.channel}> was unarchived by @${user.user?.profile?.display_name || user.user?.profile?.real_name || 'Unknown User'} (${event.user}).`, pubChannel, logger);
   });
 
   app.event('subteam_created', async ({ event, client, logger }) => {
@@ -200,7 +200,7 @@ const register = (app: App) => {
 
     const user = await client.users.info({ user: event.subteam.created_by });
 
-    messandstore(client, 'Subteam Added', `<!subteam^${event.subteam.id}> (${event.subteam.handle}) was made by @${user.user.profile?.display_name || user.user.profile.real_name} (${event.subteam.created_by}). Details: \n
+    messandstore(client, 'Subteam Added', `<!subteam^${event.subteam.id}> (${event.subteam.handle}) was made by <@${event.subteam.created_by}>. Details: \n
       Name: ${event.subteam.name}\n
       Users: ${usersarray}\n
       User count: ${event.subteam.user_count}\n
@@ -208,7 +208,7 @@ const register = (app: App) => {
       Channels: ${channelarray}\n
       Channel count: ${event.subteam.channel_count}
       `, privChannel, logger);
-    publicMessage(client, 'Subteam Added', `<!subteam^${event.subteam.id}> (${event.subteam.handle}) was made by @${user.user.profile?.display_name || user.user.profile.real_name} (${event.subteam.created_by}). Details: \n
+    publicMessage(client, 'Subteam Added', `<!subteam^${event.subteam.id}> (${event.subteam.handle}) was made by @${user.user?.profile?.display_name || user.user?.profile?.real_name || 'Unknown User'} (${event.subteam.created_by}). Details: \n
       Name: ${event.subteam.name}\n
       Users: ${usersarray}\n
       User count: ${event.subteam.user_count}\n
@@ -257,7 +257,7 @@ const register = (app: App) => {
         : null;
       const datestring = thedate ? thedate.toLocaleString() : 'unknown';
       const user = await client.users.info({ user: event.subteam.deleted_by });
-      messandstore(client, 'Subteam Deleted', `@${event.subteam.handle} was deleted by @${user.user.profile?.display_name || user.user.profile.real_name} (${event.subteam.deleted_by}). Details:\n
+      messandstore(client, 'Subteam Deleted', `@${event.subteam.handle} was deleted by <@${event.subteam.deleted_by}>. Details:\n
         Date created: ${datestring}\n
         Name: ${event.subteam.name}\n
         Created by: <@${event.subteam.created_by}>\n
@@ -267,7 +267,7 @@ const register = (app: App) => {
         Channels: ${channelarray}\n
         Channel count: ${event.subteam.channel_count}`, 
       privChannel, logger);
-      publicMessage(client, 'Subteam Deleted', `@${event.subteam.handle} was deleted by @${user.user.profile?.display_name || user.user.profile.real_name} (${event.subteam.deleted_by}). Details:\n
+      publicMessage(client, 'Subteam Deleted', `@${event.subteam.handle} was deleted by @${user.user?.profile?.display_name || user.user?.profile?.real_name || 'Unknown User'} (${event.subteam.deleted_by}). Details:\n
         Date created: ${datestring}\n
         Name: ${event.subteam.name}\n
         Created by: <@${event.subteam.created_by}>\n
@@ -324,9 +324,9 @@ const register = (app: App) => {
         : null;
       const startStr = start ? start.toLocaleString() : 'unknown';
       const endStr = end ? end.toLocaleString() : 'unknown';
-      messandstore(client, 'Dnd Set Active', `@${user.user.profile?.display_name || user.user.profile.real_name} (${event.user}) has turned on their Do Not Disturb\nStarts: ${startStr}\nEnds: ${endStr}!`, privChannel, logger);
+      messandstore(client, 'Dnd Set Active', `@${user.user?.profile?.display_name || user.user?.profile?.real_name || 'Unknown User'} (${event.user}) has turned on their Do Not Disturb\nStarts: ${startStr}\nEnds: ${endStr}!`, privChannel, logger);
     } else if (event.dnd_status.dnd_enabled == false) {
-      messandstore(client, 'Dnd Set Inactive', `@${user.user.profile?.display_name || user.user.profile.real_name} (${event.user}) has turned off their Do Not Disturb.`, privChannel, logger);
+      messandstore(client, 'Dnd Set Inactive', `@${user.user?.profile?.display_name || user.user?.profile?.real_name || 'Unknown User'} (${event.user}) has turned off their Do Not Disturb.`, privChannel, logger);
     }
   });
 
@@ -335,9 +335,9 @@ const register = (app: App) => {
     if (event.user.profile.huddle_state == "in_a_huddle") {
       const callId = (event.user.profile as any).huddle_state_call_id;
       const callInfo = callId ? ` (call ID: \`${callId}\`)` : "";
-      messandstore(client, 'Huddle Joined', `@${user.user.profile?.display_name || user.user.profile.real_name} (${event.user.id}) has joined a huddle ${callInfo}!`, privChannel, logger);
+      messandstore(client, 'Huddle Joined', `@${user.user?.profile?.display_name || user.user?.profile?.real_name || 'Unknown User'} (${event.user.id}) has joined a huddle ${callInfo}!`, privChannel, logger);
     } else {
-      messandstore(client, 'Huddle Left', `@${user.user.profile?.display_name || user.user.profile.real_name} (${event.user.id}) has left a huddle.`, privChannel, logger);
+      messandstore(client, 'Huddle Left', `@${user.user?.profile?.display_name || user.user?.profile?.real_name || 'Unknown User'} (${event.user.id}) has left a huddle.`, privChannel, logger);
     }
   });
 
@@ -367,7 +367,7 @@ const register = (app: App) => {
       const fileid = event.file.id;
       messandstore(client, 'File Shared', `File ${fileid} has been shared. Details:\n
         Channel: <#${event.channel_id}>\n
-        User: @${user.user.profile?.display_name || user.user.profile.real_name} (${event.user_id})`, 
+        User: @${user.user?.profile?.display_name || user.user?.profile?.real_name || 'Unknown User'} (${event.user_id})`, 
       privChannel, logger);
     } catch (error) {
       logger.error('Error handling message event', error);
