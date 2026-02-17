@@ -132,15 +132,15 @@ const register = (app: App) => {
       );
 
       if (event.user.is_workflow_bot) {
-        messandstore(client, 'New Workflow Bot', `<@${event.user.id}> the workflow bot has joined! Join type: ${event.type}`, privChannel, logger);
+        await messandstore(client, 'New Workflow Bot', `<@${event.user.id}> the workflow bot has joined! Join type: ${event.type}`, privChannel, logger);
         publicMessage(client, 'New Workflow Bot', `<@${event.user.id}> the workflow bot has joined! Join type: ${event.type}`, pubChannel, logger);
         logger.info('Updated New Workflow Bot record');
       } else if (event.user.is_bot) {
-        messandstore(client, 'New Bot', `<@${event.user.id}> the app has joined! Join type: ${event.type}`, privChannel, logger);
+        await messandstore(client, 'New Bot', `<@${event.user.id}> the app has joined! Join type: ${event.type}`, privChannel, logger);
         publicMessage(client, 'New Bot', `<@${event.user.id}> the app has joined! Join type: ${event.type}`, pubChannel, logger);
         logger.info('Updated New Bot record');
       } else {
-        messandstore(client, 'New User', 
+        await messandstore(client, 'New User', 
           `<@${event.user.id}> has joined! Details:\n
           Join type: ${event.type}\n
           Display name: ${event.user.name}\n
@@ -161,30 +161,30 @@ const register = (app: App) => {
 
   app.event('channel_created', async ({ event, client, logger }) => {
     const user = await client.users.info({ user: event.channel.creator });
-    messandstore(client, 'Channel Created', `<#${event.channel.id}> (${event.channel.name}) by <@${event.channel.creator}> has been created.`, privChannel, logger);
-    publicMessage(client, 'Channel Created', `<#${event.channel.id}> (${event.channel.name}) by @${user.user?.profile?.display_name || user.user?.profile?.real_name || 'Unknown User'} (${event.channel.creator}) has been created.`, pubChannel, logger);
+    await messandstore(client, 'Channel Created', `<#${event.channel.id}> (${event.channel.name}, id: ${event.channel.id}) by <@${event.channel.creator}> has been created.`, privChannel, logger);
+    publicMessage(client, 'Channel Created', `<#${event.channel.id}> (${event.channel.name}, id: ${event.channel.id}) by @${user.user?.profile?.display_name || user.user?.profile?.real_name || 'Unknown User'} (${event.channel.creator}) has been created.`, pubChannel, logger);
   });
 
   app.event('channel_archive', async ({ event, client, logger }) => {
     const user = await client.users.info({ user: event.user });
-    messandstore(client, 'Channel Archived', `<#${event.channel}> was archived by <@${event.user}>.`, privChannel, logger);
-    publicMessage(client, 'Channel Archived', `<#${event.channel}> was archived by @${user.user?.profile?.display_name || user.user?.profile?.real_name || 'Unknown User'} (${event.user}).`, pubChannel, logger);
+    await messandstore(client, 'Channel Archived', `<#${event.channel}> (id: ${event.channel}) was archived by <@${event.user}>.`, privChannel, logger);
+    publicMessage(client, 'Channel Archived', `<#${event.channel}> (id: ${event.channel}) was archived by @${user.user?.profile?.display_name || user.user?.profile?.real_name || 'Unknown User'} (${event.user}).`, pubChannel, logger);
   });
 
   app.event('channel_deleted', async ({ event, client, logger }) => {
-    messandstore(client, 'Channel Deleted', `<#${event.channel}> was deleted.`, privChannel, logger);
-    publicMessage(client, 'Channel Deleted', `<#${event.channel}> was deleted.`, pubChannel, logger);
+    await messandstore(client, 'Channel Deleted', `<#${event.channel}> (id: ${event.channel}) was deleted.`, privChannel, logger);
+    publicMessage(client, 'Channel Deleted', `<#${event.channel}> (id: ${event.channel}) was deleted.`, pubChannel, logger);
   });
 
   app.event('channel_rename', async ({ event, client, logger }) => {
-    messandstore(client, 'Channel Renamed', `<#${event.channel.id}> (${event.channel.name}) was renamed.`, privChannel, logger);
-    publicMessage(client, 'Channel Renamed', `<#${event.channel.id}> (${event.channel.name}) was renamed.`, pubChannel, logger);
+    await messandstore(client, 'Channel Renamed', `<#${event.channel.id}> (${event.channel.name}, id: ${event.channel.id}) was renamed.`, privChannel, logger);
+    publicMessage(client, 'Channel Renamed', `<#${event.channel.id}> (${event.channel.name}, id: ${event.channel.id}) was renamed.`, pubChannel, logger);
   });
 
   app.event('channel_unarchive', async ({ event, client, logger }) => {
     const user = await client.users.info({ user: event.user });
-    messandstore(client, 'Channel Unarchived', `<#${event.channel}> was unarchived by <@${event.user}>.`, privChannel, logger);
-    publicMessage(client, 'Channel Unarchived', `<#${event.channel}> was unarchived by @${user.user?.profile?.display_name || user.user?.profile?.real_name || 'Unknown User'} (${event.user}).`, pubChannel, logger);
+    await messandstore(client, 'Channel Unarchived', `<#${event.channel}> (id: ${event.channel}) was unarchived by <@${event.user}>.`, privChannel, logger);
+    publicMessage(client, 'Channel Unarchived', `<#${event.channel}> (id: ${event.channel}) was unarchived by @${user.user?.profile?.display_name || user.user?.profile?.real_name || 'Unknown User'} (${event.user}).`, pubChannel, logger);
   });
 
   app.event('subteam_created', async ({ event, client, logger }) => {
@@ -200,7 +200,7 @@ const register = (app: App) => {
 
     const user = await client.users.info({ user: event.subteam.created_by });
 
-    messandstore(client, 'Subteam Added', `<!subteam^${event.subteam.id}> (${event.subteam.handle}) was made by <@${event.subteam.created_by}>. Details: \n
+    await messandstore(client, 'Subteam Added', `<!subteam^${event.subteam.id}> (${event.subteam.handle}) was made by <@${event.subteam.created_by}>. Details: \n
       Name: ${event.subteam.name}\n
       Users: ${usersarray}\n
       User count: ${event.subteam.user_count}\n
@@ -228,7 +228,7 @@ const register = (app: App) => {
     if (event.removed_users && event.removed_users.length > 0) {
       removedarray = event.removed_users.map((id: any) => `<@${id}>`).join(', ');
     }
-    messandstore(client, 'Subteam Members Changed', `<!subteam^${event.subteam_id}> change was a member one:\n
+    await messandstore(client, 'Subteam Members Changed', `<!subteam^${event.subteam_id}> change was a member one:\n
       Added users: ${addarray}\n
       Added count: ${event.added_users_count}\n
       Deleted users: ${removedarray}\n
@@ -257,7 +257,7 @@ const register = (app: App) => {
         : null;
       const datestring = thedate ? thedate.toLocaleString() : 'unknown';
       const user = await client.users.info({ user: (event.subteam as any).deleted_by });
-      messandstore(client, 'Subteam Deleted', `@${event.subteam.handle} was deleted by <@${event.subteam.deleted_by}>. Details:\n
+      await messandstore(client, 'Subteam Deleted', `@${event.subteam.handle} was deleted by <@${event.subteam.deleted_by}>. Details:\n
         Date created: ${datestring}\n
         Name: ${event.subteam.name}\n
         Created by: <@${event.subteam.created_by}>\n
@@ -282,7 +282,7 @@ const register = (app: App) => {
         ? new Date(event.subteam.date_create * 1000)
         : null;
       const datestring = thedate ? thedate.toLocaleString() : 'unknown';
-      messandstore(client, 'Subteam Changed', `<!subteam^${event.subteam.id}> was updated by <@${event.subteam.updated_by}>. Details:\n
+      await messandstore(client, 'Subteam Changed', `<!subteam^${event.subteam.id}> was updated by <@${event.subteam.updated_by}>. Details:\n
           Date created: ${datestring}\n
           Name: ${event.subteam.name}\n
           Created by: <@${event.subteam.created_by}>\n
@@ -298,17 +298,17 @@ const register = (app: App) => {
   app.event('emoji_changed', async ({ event, client, logger }) => {
     if (event.subtype == 'add') {
       if (event.value?.startsWith("alias")) {
-        messandstore(client, 'Emoji Alias Added', `:${event.name}: was added (alias of :${event.value.split(":")[1]}:)!`, privChannel, logger);
+        await messandstore(client, 'Emoji Alias Added', `:${event.name}: was added (alias of :${event.value.split(":")[1]}:)!`, privChannel, logger);
         publicMessage(client, 'Emoji Alias Added', `:${event.name}: was added (alias of :${event.value.split(":")[1]}:)!`, pubChannel, logger);
       } else {
-        messandstore(client, 'Emoji Added', `:${event.name}: was added!`, privChannel, logger);
+        await messandstore(client, 'Emoji Added', `:${event.name}: was added!`, privChannel, logger);
         publicMessage(client, 'Emoji Added', `:${event.name}: was added!`, pubChannel, logger);
       }
     } else if (event.subtype == 'remove') {
-      messandstore(client, 'Emoji Removed', `${event.names} was removed.`, privChannel, logger);
+      await messandstore(client, 'Emoji Removed', `${event.names} was removed.`, privChannel, logger);
       publicMessage(client, 'Emoji Removed', `${event.names} was removed.`, pubChannel, logger);
     } else if (event.subtype == "rename") {
-      messandstore(client, 'Emoji Changed', `${event.old_name} was renamed to ${event.new_name}.`, privChannel, logger);
+      await messandstore(client, 'Emoji Changed', `${event.old_name} was renamed to ${event.new_name}.`, privChannel, logger);
       publicMessage(client, 'Emoji Changed', `${event.old_name} was renamed to ${event.new_name}.`, pubChannel, logger);
     }
   });
@@ -324,9 +324,9 @@ const register = (app: App) => {
         : null;
       const startStr = start ? start.toLocaleString() : 'unknown';
       const endStr = end ? end.toLocaleString() : 'unknown';
-      messandstore(client, 'Dnd Set Active', `@${user.user?.profile?.display_name || user.user?.profile?.real_name || 'Unknown User'} (${event.user}) has turned on their Do Not Disturb\nStarts: ${startStr}\nEnds: ${endStr}!`, privChannel, logger);
+      await messandstore(client, 'Dnd Set Active', `@${user.user?.profile?.display_name || user.user?.profile?.real_name || 'Unknown User'} (${event.user}) has turned on their Do Not Disturb\nStarts: ${startStr}\nEnds: ${endStr}!`, privChannel, logger);
     } else if (event.dnd_status.dnd_enabled == false) {
-      messandstore(client, 'Dnd Set Inactive', `@${user.user?.profile?.display_name || user.user?.profile?.real_name || 'Unknown User'} (${event.user}) has turned off their Do Not Disturb.`, privChannel, logger);
+      await messandstore(client, 'Dnd Set Inactive', `@${user.user?.profile?.display_name || user.user?.profile?.real_name || 'Unknown User'} (${event.user}) has turned off their Do Not Disturb.`, privChannel, logger);
     }
   });
 
@@ -335,15 +335,15 @@ const register = (app: App) => {
     if (event.user.profile.huddle_state == "in_a_huddle") {
       const callId = (event.user.profile as any).huddle_state_call_id;
       const callInfo = callId ? ` (call ID: \`${callId}\`)` : "";
-      messandstore(client, 'Huddle Joined', `@${user.user?.profile?.display_name || user.user?.profile?.real_name || 'Unknown User'} (${event.user.id}) has joined a huddle ${callInfo}!`, privChannel, logger);
+      await messandstore(client, 'Huddle Joined', `@${user.user?.profile?.display_name || user.user?.profile?.real_name || 'Unknown User'} (${event.user.id}) has joined a huddle ${callInfo}!`, privChannel, logger);
     } else {
-      messandstore(client, 'Huddle Left', `@${user.user?.profile?.display_name || user.user?.profile?.real_name || 'Unknown User'} (${event.user.id}) has left a huddle.`, privChannel, logger);
+      await messandstore(client, 'Huddle Left', `@${user.user?.profile?.display_name || user.user?.profile?.real_name || 'Unknown User'} (${event.user.id}) has left a huddle.`, privChannel, logger);
     }
   });
 
   app.event('file_created', async ({ event, client, logger }) => {
     const fileid = event.file.id;
-    messandstore(client, 'File Created', `File ${fileid} has been created.`, privChannel, logger);
+    await messandstore(client, 'File Created', `File ${fileid} has been created.`, privChannel, logger);
   });
 
   app.event('file_shared', async ({ event, client, logger }) => {
@@ -365,7 +365,7 @@ const register = (app: App) => {
       const user = await client.users.info({ user: event.user_id });
 
       const fileid = event.file.id;
-      messandstore(client, 'File Shared', `File ${fileid} has been shared. Details:\n
+      await messandstore(client, 'File Shared', `File ${fileid} has been shared. Details:\n
         Channel: <#${event.channel_id}>\n
         User: @${user.user?.profile?.display_name || user.user?.profile?.real_name || 'Unknown User'} (${event.user_id})`, 
       privChannel, logger);
@@ -376,22 +376,22 @@ const register = (app: App) => {
 
   app.event('file_change', async ({ event, client, logger }) => {
     const fileid = event.file.id;
-    messandstore(client, 'File Changed', `File ${fileid} has been changed.`, privChannel, logger);
+    await messandstore(client, 'File Changed', `File ${fileid} has been changed.`, privChannel, logger);
   });
 
   app.event('file_deleted', async ({ event, client, logger }) => {
     const fileid = event.file_id;
-    messandstore(client, 'File Deleted', `File ${fileid} has been deleted.`, privChannel, logger);
+    await messandstore(client, 'File Deleted', `File ${fileid} has been deleted.`, privChannel, logger);
   });
 
   app.event('file_public', async ({ event, client, logger }) => {
     const fileid = event.file.id;
-    messandstore(client, 'File Public', `File ${fileid} has been made public.`, privChannel, logger);
+    await messandstore(client, 'File Public', `File ${fileid} has been made public.`, privChannel, logger);
   });
 
   app.event('file_unshared', async ({ event, client, logger }) => {
     const fileid = event.file.id;
-    messandstore(client, 'File Unshared', `File ${fileid} has been unshared.`, privChannel, logger);
+    await messandstore(client, 'File Unshared', `File ${fileid} has been unshared.`, privChannel, logger);
   });
 
   // Retry helper function
@@ -424,69 +424,69 @@ const register = (app: App) => {
         }
         
         if (existingObject.name != event.user.name) {
-          messandstore(client, 'Username Changed', `<@${event.user.id}> has changed their username from ${existingObject.name} to ${event.user.name}.`, privChannel, logger);
+          await messandstore(client, 'Username Changed', `<@${event.user.id}> has changed their username from ${existingObject.name} to ${event.user.name}.`, privChannel, logger);
         }
         if (existingObject.profile.real_name != event.user.profile.real_name) {
-          messandstore(client, 'Real Name Changed', `<@${event.user.id}> has changed their real name from ${existingObject.profile.real_name} (${existingObject.profile.real_name_normalized}) to ${event.user.profile.real_name} (${event.user.profile.real_name_normalized}).`, privChannel, logger);
+          await messandstore(client, 'Real Name Changed', `<@${event.user.id}> has changed their real name from ${existingObject.profile.real_name} (${existingObject.profile.real_name_normalized}) to ${event.user.profile.real_name} (${event.user.profile.real_name_normalized}).`, privChannel, logger);
         }
         if (existingObject.profile.display_name != event.user.profile.display_name) {
-          messandstore(client, 'Display Name Changed', `<@${event.user.id}> has changed their display name from ${existingObject.profile.display_name} (${existingObject.profile.display_name_normalized}) to ${event.user.profile.display_name} (${event.user.profile.display_name_normalized}).`, privChannel, logger);
+          await messandstore(client, 'Display Name Changed', `<@${event.user.id}> has changed their display name from ${existingObject.profile.display_name} (${existingObject.profile.display_name_normalized}) to ${event.user.profile.display_name} (${event.user.profile.display_name_normalized}).`, privChannel, logger);
         }
         if (existingObject.deleted != event.user.deleted) {  
           if (event.user.deleted) {
-            messandstore(client, 'User Deactivated', `<@${event.user.id}> has been deactivated.`, privChannel, logger);
+            await messandstore(client, 'User Deactivated', `<@${event.user.id}> has been deactivated.`, privChannel, logger);
             publicMessage(client, 'User Deactivated', `<@${event.user.id}> has been deactivated.`, pubChannel, logger);
-          } else {
-            messandstore(client, 'User Reactivated', `<@${event.user.id}> has been reactivated.`, privChannel, logger);
+          } else if (existingObject.deleted == true && !event.user.deleted) {
+            await messandstore(client, 'User Reactivated', `<@${event.user.id}> has been reactivated.`, privChannel, logger);
             publicMessage(client, 'User Reactivated', `<@${event.user.id}> has been reactivated.`, pubChannel, logger);
           }
         }
         if (existingObject.is_admin != event.user.is_admin && event.user.deleted == false) {
           if (event.user.is_admin) {
-            messandstore(client, 'User Become Admin', `<@${event.user.id}> has become an admin.`, privChannel, logger);
+            await messandstore(client, 'User Become Admin', `<@${event.user.id}> has become an admin.`, privChannel, logger);
           } else if (existingObject.is_admin == true && !event.user.is_admin) {
-            messandstore(client, 'Removed Admin', `<@${event.user.id}> has been removed as an admin.`, privChannel, logger);
+            await messandstore(client, 'Removed Admin', `<@${event.user.id}> has been removed as an admin.`, privChannel, logger);
           }
         }
         if ((existingObject.is_owner != event.user.is_owner || existingObject.is_primary_owner != event.user.is_primary_owner) && event.user.deleted == false) {
           if (event.user.is_owner || event.user.is_primary_owner) {
-            messandstore(client, 'User Become Owner', `<@${event.user.id}> has become an owner.`, privChannel, logger);
+            await messandstore(client, 'User Become Owner', `<@${event.user.id}> has become an owner.`, privChannel, logger);
           } else if ((existingObject.is_owner == true || existingObject.is_primary_owner == true) && !event.user.is_owner && !event.user.is_primary_owner) {
-            messandstore(client, 'Removed Owner', `<@${event.user.id}> has been removed as an owner.`, privChannel, logger);
+            await messandstore(client, 'Removed Owner', `<@${event.user.id}> has been removed as an owner.`, privChannel, logger);
           }
         }
         if (existingObject.is_restricted != event.user.is_restricted && event.user.deleted == false) {
           if (event.user.is_restricted) {
-            messandstore(client, 'Change to MCG', `<@${event.user.id}> has become an Multi-Channel Guest.`, privChannel, logger);
+            await messandstore(client, 'Change to MCG', `<@${event.user.id}> has become an Multi-Channel Guest.`, privChannel, logger);
             publicMessage(client, 'Change to MCG', `<@${event.user.id}> has become an Multi-Channel Guest.`, pubChannel, logger);
-          } else {
-            messandstore(client, 'Change to User', `<@${event.user.id}> has become a member.`, privChannel, logger);
+          } else if (existingObject.is_restricted == true && !event.user.is_restricted) {
+            await messandstore(client, 'Change to User', `<@${event.user.id}> has become a member.`, privChannel, logger);
           }
         }
         if (existingObject.is_ultra_restricted != event.user.is_ultra_restricted && event.user.deleted == false) {
           if (event.user.is_ultra_restricted) {
-            messandstore(client, 'Change to SCG', `<@${event.user.id}> has become an Single-Channel Guest.`, privChannel, logger);
-          } else {
-            messandstore(client, 'Change to User', `<@${event.user.id}> has become a member.`, privChannel, logger);
+            await messandstore(client, 'Change to SCG', `<@${event.user.id}> has become an Single-Channel Guest.`, privChannel, logger);
+          } else if (existingObject.is_ultra_restricted == true && !event.user.is_ultra_restricted) {
+            await messandstore(client, 'Change to User', `<@${event.user.id}> has become a member.`, privChannel, logger);
           }
         }
         if (existingObject.profile.pronouns != event.user.profile.pronouns) {
-          messandstore(client, 'Pronouns Changed', `<@${event.user.id}> changed their pronouns from ${existingObject.profile.pronouns} to ${event.user.profile.pronouns}.`, privChannel, logger);
+          await messandstore(client, 'Pronouns Changed', `<@${event.user.id}> changed their pronouns from ${existingObject.profile.pronouns} to ${event.user.profile.pronouns}.`, privChannel, logger);
         }
         if (existingObject.profile.email != event.user.profile.email) {
-          messandstore(client, 'Emails Changed', `<@${event.user.id}> changed their email from ${existingObject.profile.email} to ${event.user.profile.email}.`, privChannel, logger);
+          await messandstore(client, 'Emails Changed', `<@${event.user.id}> changed their email from ${existingObject.profile.email} to ${event.user.profile.email}.`, privChannel, logger);
         }
         if (existingObject.profile.title != event.user.profile.title) {
-          messandstore(client, 'Title Changed', `<@${event.user.id}> changed their title from ${existingObject.profile.title} to ${event.user.profile.title}.`, privChannel, logger);
+          await messandstore(client, 'Title Changed', `<@${event.user.id}> changed their title from ${existingObject.profile.title} to ${event.user.profile.title}.`, privChannel, logger);
         }
         if (existingObject.profile.phone != event.user.profile.phone) {
-          messandstore(client, 'Phone Number Changed', `<@${event.user.id}> changed their phone number from ${existingObject.profile.phone} to ${event.user.profile.phone}.`, privChannel, logger);
+          await messandstore(client, 'Phone Number Changed', `<@${event.user.id}> changed their phone number from ${existingObject.profile.phone} to ${event.user.profile.phone}.`, privChannel, logger);
         }
         if (existingObject.profile.start_date != event.user.profile.start_date) {
-          messandstore(client, 'Start Date Changed', `<@${event.user.id}> changed their start date from ${existingObject.profile.start_date} to ${event.user.profile.start_date}.`, privChannel, logger);
+          await messandstore(client, 'Start Date Changed', `<@${event.user.id}> changed their start date from ${existingObject.profile.start_date} to ${event.user.profile.start_date}.`, privChannel, logger);
         }
         if (existingObject.profile.tz != event.user.profile.tz) {
-          messandstore(client, 'Timezone Changed', `<@${event.user.id}> changed their timezone from ${existingObject.profile.tz} (${existingObject.profile.tz_label}) to ${event.user.profile.tz} (${event.user.profile.tz_label}).`, privChannel, logger);
+          await messandstore(client, 'Timezone Changed', `<@${event.user.id}> changed their timezone from ${existingObject.profile.tz} (${existingObject.profile.tz_label}) to ${event.user.profile.tz} (${event.user.profile.tz_label}).`, privChannel, logger);
         }
         if (existingObject.profile.avatar_hash != event.user.profile.avatar_hash) {
           const newImage = event.user.profile.image_original 
@@ -496,16 +496,16 @@ const register = (app: App) => {
           const oldImage = existingObject.profile.image_original 
                         || existingObject.profile.image_512 
                         || "No previous image";
-          messandstore(client, 'Profile Image Change', `<@${event.user.id}> changed their profile image from ${oldImage} to ${newImage}.`, privChannel, logger);
+          await messandstore(client, 'Profile Image Change', `<@${event.user.id}> changed their profile image from ${oldImage} to ${newImage}.`, privChannel, logger);
         }
         if (existingObject.profile.status_text != event.user.profile.status_text) {
-          messandstore(client, 'Status Text Changed', `<@${event.user.id}> changed their status text from ${existingObject.profile.status_text} to ${event.user.profile.status_text}.`, privChannel, logger);
+          await messandstore(client, 'Status Text Changed', `<@${event.user.id}> changed their status text from ${existingObject.profile.status_text} to ${event.user.profile.status_text}.`, privChannel, logger);
         }
         if (existingObject.profile.status_emoji != event.user.profile.status_emoji) {
-          messandstore(client, 'Status Emoji Changed', `<@${event.user.id}> changed their status emoji from ${existingObject.profile.status_emoji} to ${event.user.profile.status_emoji}.`, privChannel, logger);
+          await messandstore(client, 'Status Emoji Changed', `<@${event.user.id}> changed their status emoji from ${existingObject.profile.status_emoji} to ${event.user.profile.status_emoji}.`, privChannel, logger);
         }
         if (existingObject.profile.status_expiration != event.user.profile.status_expiration) {
-          messandstore(client, 'Status Expiration Changed', `<@${event.user.id}> changed their status expiration from ${existingObject.profile.status_expiration} to ${event.user.profile.status_expiration}.`, privChannel, logger);
+          await messandstore(client, 'Status Expiration Changed', `<@${event.user.id}> changed their status expiration from ${existingObject.profile.status_expiration} to ${event.user.profile.status_expiration}.`, privChannel, logger);
         }
 
         const userObject = JSON.stringify(event.user);
