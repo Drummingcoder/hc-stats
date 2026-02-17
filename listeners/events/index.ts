@@ -72,7 +72,8 @@ try {
     'Phone Number Changed', 'Start Date Changed', 'Timezone Changed', 
     'Status Text Changed', 'Status Emoji Changed',
     'Status Expiration Changed', 'Profile Image Change', 'User Reactivated',
-    'Removed Admin', 'Removed Owner', 'Change to User'
+    'Removed Admin', 'Removed Owner', 'Change to User', 'Channel Made Public',
+    'Channel Made Private'
   ];
 
   const statements = initialFields.map(field => ({
@@ -535,4 +536,4 @@ const register = (app: App) => {
   });
 };
 
-export default { register, turso, dbRun, dbGet, dbAll };
+export default { register, turso, dbRun, dbGet, dbAll, messandstore, publicMessage, privChannel, pubChannel };
