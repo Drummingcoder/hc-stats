@@ -394,12 +394,34 @@ const register = (app: App) => {
     messandstore(client, 'File Unshared', `File ${fileid} has been unshared.`, privChannel, logger);
   });
 
+  // Retry helper function
+  const retryOperation = async (operation: () => Promise<void>, maxRetries = 3, baseDelay = 1000) => {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        await operation();
+        return; // Success, exit
+      } catch (error) {
+        if (attempt === maxRetries) {
+          throw error; // Final attempt failed, rethrow
+        }
+        const delay = baseDelay * Math.pow(2, attempt - 1); // Exponential backoff
+        console.warn(`Retry attempt ${attempt}/${maxRetries} failed, waiting ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+  };
+
   app.event('user_change', async ({ event, client, logger }: { event: any, client: any, logger: any }) => {
     try {
       logger.info(event.user);
       const exist = await dbGet('SELECT * FROM users WHERE id = ?', event.user.id) as any;
       if (exist) {
         const existingObject = JSON.parse(exist.userobject);
+
+        if (existingObject.updated >= event.user.updated) {
+          logger.info(`No update needed for user ${event.user.id} - existing data is newer or same.`);
+          return;
+        }
         
         if (existingObject.name != event.user.name) {
           messandstore(client, 'Username Changed', `<@${event.user.id}> has changed their username from ${existingObject.name} to ${event.user.name}.`, privChannel, logger);
@@ -422,14 +444,14 @@ const register = (app: App) => {
         if (existingObject.is_admin != event.user.is_admin && event.user.deleted == false) {
           if (event.user.is_admin) {
             messandstore(client, 'User Become Admin', `<@${event.user.id}> has become an admin.`, privChannel, logger);
-          } else {
+          } else if (existingObject.is_admin == true && !event.user.is_admin) {
             messandstore(client, 'Removed Admin', `<@${event.user.id}> has been removed as an admin.`, privChannel, logger);
           }
         }
         if ((existingObject.is_owner != event.user.is_owner || existingObject.is_primary_owner != event.user.is_primary_owner) && event.user.deleted == false) {
           if (event.user.is_owner || event.user.is_primary_owner) {
             messandstore(client, 'User Become Owner', `<@${event.user.id}> has become an owner.`, privChannel, logger);
-          } else {
+          } else if ((existingObject.is_owner == true || existingObject.is_primary_owner == true) && !event.user.is_owner && !event.user.is_primary_owner) {
             messandstore(client, 'Removed Owner', `<@${event.user.id}> has been removed as an owner.`, privChannel, logger);
           }
         }
@@ -487,33 +509,28 @@ const register = (app: App) => {
         }
 
         const userObject = JSON.stringify(event.user);
-        await dbRun(
-          'INSERT OR REPLACE INTO users (id, userobject) VALUES (?, ?)',
-          event.user.id,
-          userObject
-        );
+        await retryOperation(async () => {
+          await dbRun(
+            'INSERT OR REPLACE INTO users (id, userobject) VALUES (?, ?)',
+            event.user.id,
+            userObject
+          );
+        });
         logger.info(`Updated user object in database for user ${event.user.id}`);
       } else {
         const userObject = JSON.stringify(event.user);
-        await dbRun(
-          'INSERT OR REPLACE INTO users (id, userobject) VALUES (?, ?)',
-          event.user.id,
-          userObject
-        );
+        await retryOperation(async () => {
+          await dbRun(
+            'INSERT OR REPLACE INTO users (id, userobject) VALUES (?, ?)',
+            event.user.id,
+            userObject
+          );
+        });
         logger.info(`Inserted new user object in database for user ${event.user.id}`);
       }
     } catch (error) {
       logger.error('Error handling user_change event:', error);
       logger.error(`Failed to update database for user ${event.user?.id}`);
-      
-      try {
-        await client.chat.postMessage({
-          channel: privChannel,
-          text: `⚠️ *Database Error*\nFailed to update user <@${event.user?.id}>\n\`\`\`${error}\`\`\``,
-        });
-      } catch (slackError) {
-        logger.error('Failed to send error notification to Slack:', slackError);
-      }
     }
   });
 };
