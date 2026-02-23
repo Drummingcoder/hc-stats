@@ -9,9 +9,9 @@ const register = (app: App) => {
 
   app.message(async ({ message, client, logger }) => {
     const chan = await client.conversations.open({ users: "U091EPSQ3E3" });
-    if (message) {
+    if (message && chan.channel && chan.channel.id) {
       await client.chat.postMessage({
-        channel: chan.channel.id,
+        channel: chan.channel.id ?? '',
         text: `Message object: \n\`\`\`${JSON.stringify(message, null, 2)}\`\`\``,
       });
     }
