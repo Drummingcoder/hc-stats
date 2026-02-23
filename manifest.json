@@ -22,8 +22,11 @@
             "bot": [
                 "channels:history",
                 "channels:read",
+                "channels:manage",
                 "groups:read",
                 "groups:write",
+                "im:read",
+                "im:write",
                 "chat:write",
                 "commands",
                 "emoji:read",
@@ -61,7 +64,8 @@
                 "file_deleted",
                 "file_public",
                 "file_unshared",
-                "user_change"
+                "user_change",
+                "message"
             ]
         },
         "interactivity": {

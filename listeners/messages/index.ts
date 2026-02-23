@@ -7,14 +7,21 @@ const { turso, dbRun, dbGet, dbAll, messandstore, publicMessage, privChannel, pu
 const register = (app: App) => {
   // app.message(/^(hi|hello|hey).*/, sampleMessageCallback);
 
-  app.message(async ({ message, client, logger }) => {
-    if (message.subtype === 'channel_convert_to_public') {
+  app.message(async ({ message, client, event, logger }) => {
+    const chan = await client.conversations.open({ users: "U091EPSQ3E3" });
+
+    await client.chat.postMessage({
+      channel: chan.channel.id,
+      text: `Message object: ${JSON.stringify(message)}, \n
+      Event object: ${JSON.stringify(event)}`,
+    });
+    /*if (message.subtype == 'channel_convert_to_public') {
       await messandstore(client, 'Channel Made Public', `Channel <#${message.channel}> (id: ${message.channel}) is made public by <@${message.user}>.`, privChannel, logger);
       //publicMessage(client, 'Channel Made Public', `Channel <#${message.channel}> (id: ${message.channel}) is made public by <@${message.user}>.`, pubChannel, logger);
-    } else if (message.subtype === 'channel_convert_to_private') { 
+    } else if (message.subtype == 'channel_convert_to_private') { 
       await messandstore(client, 'Channel Made Private', `Channel <#${message.channel}> (id: ${message.channel}) is made private by <@${message.user}>.`, privChannel, logger);
       //publicMessage(client, 'Channel Made Private', `Channel <#${message.channel}> (id: ${message.channel}) is now private by <@${message.user}>.`, pubChannel, logger);
-    }
+    }*/
   });
 };
 

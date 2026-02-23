@@ -424,7 +424,7 @@ const register = (app: App) => {
           return;
         }
         
-        if (existingObject.name != event.user.name) {
+        /*if (existingObject.name != event.user.name) {
           await messandstore(client, 'Username Changed', `<@${event.user.id}> has changed their username from ${existingObject.name} to ${event.user.name}.`, privChannel, logger);
         }
         if (existingObject.profile.real_name != event.user.profile.real_name) {
@@ -432,7 +432,7 @@ const register = (app: App) => {
         }
         if (existingObject.profile.display_name != event.user.profile.display_name) {
           await messandstore(client, 'Display Name Changed', `<@${event.user.id}> has changed their display name from ${existingObject.profile.display_name} (${existingObject.profile.display_name_normalized}) to ${event.user.profile.display_name} (${event.user.profile.display_name_normalized}).`, privChannel, logger);
-        }
+        }*/
         if (existingObject.deleted != event.user.deleted) {  
           if (event.user.deleted) {
             await messandstore(client, 'User Deactivated', `<@${event.user.id}> has been deactivated.`, privChannel, logger);
@@ -471,7 +471,7 @@ const register = (app: App) => {
             await messandstore(client, 'Change to User', `<@${event.user.id}> has become a member.`, privChannel, logger);
           }
         }
-        if (existingObject.profile.pronouns != event.user.profile.pronouns) {
+        /* if (existingObject.profile.pronouns != event.user.profile.pronouns) {
           await messandstore(client, 'Pronouns Changed', `<@${event.user.id}> changed their pronouns from ${existingObject.profile.pronouns} to ${event.user.profile.pronouns}.`, privChannel, logger);
         }
         if (existingObject.profile.email != event.user.profile.email) {
@@ -507,7 +507,7 @@ const register = (app: App) => {
         }
         if (existingObject.profile.status_expiration != event.user.profile.status_expiration) {
           await messandstore(client, 'Status Expiration Changed', `<@${event.user.id}> changed their status expiration from ${existingObject.profile.status_expiration} to ${event.user.profile.status_expiration}.`, privChannel, logger);
-        }
+        } */
 
         const userObject = JSON.stringify(event.user);
         await retryOperation(async () => {
