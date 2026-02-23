@@ -7,15 +7,7 @@ const { turso, dbRun, dbGet, dbAll, messandstore, publicMessage, privChannel, pu
 const register = (app: App) => {
   // app.message(/^(hi|hello|hey).*/, sampleMessageCallback);
 
-  app.message(async ({ message, client, logger }) => {
-    const chan = await client.conversations.open({ users: "U091EPSQ3E3" });
-    if (message && chan.channel && chan.channel.id) {
-      await client.chat.postMessage({
-        channel: chan.channel.id ?? '',
-        text: `Message object: \n\`\`\`${JSON.stringify(message, null, 2)}\`\`\``,
-      });
-    }
-    
+  app.message(async ({ message, client, logger }) => {  
     /*if (message.subtype == 'channel_convert_to_public') {
       await messandstore(client, 'Channel Made Public', `Channel <#${message.channel}> (id: ${message.channel}) is made public by <@${message.user}>.`, privChannel, logger);
       //publicMessage(client, 'Channel Made Public', `Channel <#${message.channel}> (id: ${message.channel}) is made public by <@${message.user}>.`, pubChannel, logger);
