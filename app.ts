@@ -132,7 +132,9 @@ cron.schedule('0 * * * *', async () => {
     {field: 'Status Text Changed', text: `Status text changed: `},
     {field: 'Status Emoji Changed', text: `Status emoji changed: `},
     {field: 'Status Expiration Changed', text: `Status expiration changed: `},
-    {field: 'Profile Image Change', text: `Profile image changed: `}
+    {field: 'Profile Image Change', text: `Profile image changed: `},
+    {field: 'Channel Made Public', text: `Channel made public: `},
+    {field: 'Channel Made Private', text: `Channel made private: `},
   ];
 
   const airtablePayload: { field: string; ts: any; number: number; channel: string; PubMes?: any}[] = [];
