@@ -202,7 +202,7 @@ const register = (app: App) => {
 
     if (msg.subtype === 'channel_convert_to_public') {
       await messandstore(client, 'Channel Made Public', `Channel <#${msg.channel}> (id: ${msg.channel}) was made public by <@${msg.user}>.`, privChannel, logger);
-      //publicMessage(client, 'Channel Made Public', `Channel <#${msg.channel}> (id: ${msg.channel}) is made public by <@${msg.user}>.`, pubChannel, logger);
+      publicMessage(client, 'Channel Made Public', `Channel <#${msg.channel}> (id: ${msg.channel}) was made public by @${user.user?.profile?.display_name || user.user?.profile?.real_name || 'Unknown User'} (${msg.user}).`, pubChannel, logger);
       const chan = await client.conversations.open({ users: "U091EPSQ3E3" });
       if (msg && chan.channel && chan.channel.id) {
         await client.chat.postMessage({
