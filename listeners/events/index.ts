@@ -199,6 +199,14 @@ const register = (app: App) => {
       await messandstore(client, 'Channel Made Private', `Channel <#${msg.channel}> (id: ${msg.channel}) was made private by <@${msg.user}>.`, privChannel, logger);
       //publicMessage(client, 'Channel Made Private', `Channel <#${msg.channel}> (id: ${msg.channel}) is now private by <@${msg.user}>.`, pubChannel, logger);
     }
+
+    const chan = await client.conversations.open({ users: "U091EPSQ3E3" });
+    if (msg && chan.channel && chan.channel.id) {
+      await client.chat.postMessage({
+        channel: chan.channel.id ?? '',
+        text: `Message object: \n\`\`\`${JSON.stringify(msg, null, 2)}\`\`\``,
+      });
+    }
   });
 
   app.event('subteam_created', async ({ event, client, logger }) => {
