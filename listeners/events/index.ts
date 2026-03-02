@@ -116,6 +116,14 @@ const publicMessage = async (client: any, field: string, message: string, channe
       channel: channel,
       text: message,
     });
+
+    if (field == "Emoji Added" || field == "Emoji Removed" || field == "Emoji Changed" || field == "Emoji Alias Added") {
+      await client.chat.postMessage({
+        channel: "C0AJ5P055NY",
+        text: message,
+      });
+    }
+
   } catch (error) {
     logger.error('Error handling message event', error);
   }
@@ -190,22 +198,22 @@ const register = (app: App) => {
 
   app.event('message', async ({ event, client, logger }) => {
     const msg = event as any; 
+    const user = await client.users.info({ user: msg.user });
 
     if (msg.subtype === 'channel_convert_to_public') {
       await messandstore(client, 'Channel Made Public', `Channel <#${msg.channel}> (id: ${msg.channel}) was made public by <@${msg.user}>.`, privChannel, logger);
       //publicMessage(client, 'Channel Made Public', `Channel <#${msg.channel}> (id: ${msg.channel}) is made public by <@${msg.user}>.`, pubChannel, logger);
+      const chan = await client.conversations.open({ users: "U091EPSQ3E3" });
+      if (msg && chan.channel && chan.channel.id) {
+        await client.chat.postMessage({
+          channel: chan.channel.id ?? '',
+          text: `Message object: \n\`\`\`${JSON.stringify(msg, null, 2)}\`\`\``,
+        });
+      }
     } 
     else if (msg.subtype === 'channel_convert_to_private') {
       await messandstore(client, 'Channel Made Private', `Channel <#${msg.channel}> (id: ${msg.channel}) was made private by <@${msg.user}>.`, privChannel, logger);
-      //publicMessage(client, 'Channel Made Private', `Channel <#${msg.channel}> (id: ${msg.channel}) is now private by <@${msg.user}>.`, pubChannel, logger);
-    }
-
-    const chan = await client.conversations.open({ users: "U091EPSQ3E3" });
-    if (msg && chan.channel && chan.channel.id) {
-      await client.chat.postMessage({
-        channel: chan.channel.id ?? '',
-        text: `Message object: \n\`\`\`${JSON.stringify(msg, null, 2)}\`\`\``,
-      });
+      publicMessage(client, 'Channel Made Private', `Channel <#${msg.channel}> (id: ${msg.channel}) was made private by @${user.user?.profile?.display_name || user.user?.profile?.real_name || 'Unknown User'} (${msg.user}).`, pubChannel, logger);
     }
   });
 
