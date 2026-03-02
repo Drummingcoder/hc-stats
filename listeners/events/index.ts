@@ -188,6 +188,19 @@ const register = (app: App) => {
     publicMessage(client, 'Channel Unarchived', `<#${event.channel}> (id: ${event.channel}) was unarchived by @${user.user?.profile?.display_name || user.user?.profile?.real_name || 'Unknown User'} (${event.user}).`, pubChannel, logger);
   });
 
+  app.event('message', async ({ event, client, logger }) => {
+    const msg = event as any; 
+
+    if (msg.subtype === 'channel_convert_to_public') {
+      await messandstore(client, 'Channel Made Public', `Channel <#${msg.channel}> (id: ${msg.channel}) was made public by <@${msg.user}>.`, privChannel, logger);
+      //publicMessage(client, 'Channel Made Public', `Channel <#${msg.channel}> (id: ${msg.channel}) is made public by <@${msg.user}>.`, pubChannel, logger);
+    } 
+    else if (msg.subtype === 'channel_convert_to_private') {
+      await messandstore(client, 'Channel Made Private', `Channel <#${msg.channel}> (id: ${msg.channel}) was made private by <@${msg.user}>.`, privChannel, logger);
+      //publicMessage(client, 'Channel Made Private', `Channel <#${msg.channel}> (id: ${msg.channel}) is now private by <@${msg.user}>.`, pubChannel, logger);
+    }
+  });
+
   app.event('subteam_created', async ({ event, client, logger }) => {
     let usersarray = "none";
     if (event.subteam.users && event.subteam.users.length > 0) {
