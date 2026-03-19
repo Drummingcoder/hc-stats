@@ -331,7 +331,7 @@ const register = (app: App) => {
         : null;
       const datestring = thedate ? thedate.toLocaleString() : 'unknown';
       const user = await client.users.info({ user: (event.subteam as any).deleted_by });
-      await postinping(client, 'Subteam Deleted', `<!subteam^${event.subteam_id}> (${event.subteam.handle}) was deleted by <@${event.subteam.deleted_by}>. Details:\n
+      await postinping(client, 'Subteam Deleted', `<!subteam^${event.subteam.id}> (${event.subteam.handle}) was deleted by <@${event.subteam.deleted_by}>. Details:\n
         Date created: ${datestring}\n
         Name: ${event.subteam.name}\n
         Created by: <@${event.subteam.created_by}>\n
