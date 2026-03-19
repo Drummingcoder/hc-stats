@@ -233,13 +233,6 @@ const register = (app: App) => {
       await postinping(client, 'Channel Made Public', `Channel <#${msg.channel}> (id: ${msg.channel}) was made public by <@${msg.user}>.`, pingChannel, logger);
       await messandstore(client, 'Channel Made Public', `Channel <#${msg.channel}> (id: ${msg.channel}) was made public by @${user.user?.profile?.display_name || user.user?.profile?.real_name || 'Unknown User'} (${msg.user}).`, privChannel, logger);
       publicMessage(client, 'Channel Made Public', `Channel <#${msg.channel}> (id: ${msg.channel}) was made public by @${user.user?.profile?.display_name || user.user?.profile?.real_name || 'Unknown User'} (${msg.user}).`, pubChannel, logger);
-      const chan = await client.conversations.open({ users: "U091EPSQ3E3" });
-      if (msg && chan.channel && chan.channel.id) {
-        await client.chat.postMessage({
-          channel: chan.channel.id ?? '',
-          text: `Message object: \n\`\`\`${JSON.stringify(msg, null, 2)}\`\`\``,
-        });
-      }
     } 
   });
 
