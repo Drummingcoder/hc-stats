@@ -4,6 +4,7 @@ import { createClient } from "@libsql/client";
 
 const privChannel = 'C09TXAZ8GAG'; 
 const pubChannel = 'C09UH2LCP1Q';
+const pingChannel = 'C0AN1HZQF0R';
 
 const turso = createClient({
   url: process.env.TURSO_DATABASE_URL || "",
@@ -56,7 +57,15 @@ try {
       PubMes TEXT
     )
   `);
+  await turso.execute(`
+    CREATE TABLE IF NOT EXISTS PingChannelData (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      Field TEXT UNIQUE NOT NULL,
+      Messagets TEXT
+    )
+  `);
   console.log('Database table "Data" ready');
+  console.log('Database table "PingChannelData" ready');
 
   const initialFields = [
     'New User', 'New Bot', 'New Workflow Bot', 'Channel Created',
@@ -66,14 +75,10 @@ try {
     'Emoji Changed', 'Emoji Removed', 'Emoji Alias Added',
     'Dnd Set Active', 'Dnd Set Inactive', 'Huddle Joined', 'Huddle Left', 
     'File Created', 'File Shared', 'File Changed', 'File Deleted',
-    'File Public', 'File Unshared', 'Username Changed', 'Real Name Changed', 'Display Name Changed',
+    'File Public', 'File Unshared',
     'User Deactivated', 'User Become Admin', 'User Become Owner', 'Change to MCG',
-    'Change to SCG', 'Pronouns Changed', 'Emails Changed', 'Title Changed',
-    'Phone Number Changed', 'Start Date Changed', 'Timezone Changed', 
-    'Status Text Changed', 'Status Emoji Changed',
-    'Status Expiration Changed', 'Profile Image Change', 'User Reactivated',
-    'Removed Admin', 'Removed Owner', 'Change to User', 'Channel Made Public',
-    'Channel Made Private'
+    'Change to SCG', 'User Reactivated',
+    'Removed Admin', 'Removed Owner', 'Change to User', 'Channel Made Public'
   ];
 
   const statements = initialFields.map(field => ({
@@ -81,7 +86,13 @@ try {
     args: [field]
   }));
 
+  const pingStatements = initialFields.map(field => ({
+    sql: 'INSERT OR IGNORE INTO PingChannelData (Field) VALUES (?)',
+    args: [field]
+  }));
+
   await turso.batch(statements, "write");
+  await turso.batch(pingStatements, "write");
   console.log('Database seeding complete');
 
 } catch (err) {
@@ -105,6 +116,21 @@ const messandstore = async (client: any, field: string, message: string, channel
     });
     
     logger.info(`Updated ${field} record`);
+  } catch (error) {
+    logger.error('Error handling message event', error);
+  }
+};
+
+const postinping = async (client: any, field: string, message: string, channel: string, logger: any) => {
+  try {
+    const ts = await dbGet('SELECT * FROM PingChannelData WHERE Field = ?', field) as any;
+    const messagets = ts?.Messagets as string | undefined;
+    await client.chat.postMessage({
+      channel: channel,
+      text: message,
+      thread_ts: messagets,
+    });
+    logger.info(`Posted ${field} record`);
   } catch (error) {
     logger.error('Error handling message event', error);
   }
@@ -170,13 +196,15 @@ const register = (app: App) => {
 
   app.event('channel_created', async ({ event, client, logger }) => {
     const user = await client.users.info({ user: event.channel.creator });
-    await messandstore(client, 'Channel Created', `<#${event.channel.id}> (${event.channel.name}, id: ${event.channel.id}) by <@${event.channel.creator}> has been created.`, privChannel, logger);
+    await postinping(client, 'Channel Created', `<#${event.channel.id}> (${event.channel.name}, id: ${event.channel.id}) by <@${event.channel.creator}> has been created.`, pingChannel, logger);
+    await messandstore(client, 'Channel Created', `<#${event.channel.id}> (${event.channel.name}, id: ${event.channel.id}) by @${user.user?.profile?.display_name || user.user?.profile?.real_name || 'Unknown User'} (${event.channel.creator}) has been created.`, privChannel, logger);
     publicMessage(client, 'Channel Created', `<#${event.channel.id}> (${event.channel.name}, id: ${event.channel.id}) by @${user.user?.profile?.display_name || user.user?.profile?.real_name || 'Unknown User'} (${event.channel.creator}) has been created.`, pubChannel, logger);
   });
 
   app.event('channel_archive', async ({ event, client, logger }) => {
     const user = await client.users.info({ user: event.user });
-    await messandstore(client, 'Channel Archived', `<#${event.channel}> (id: ${event.channel}) was archived by <@${event.user}>.`, privChannel, logger);
+    await postinping(client, 'Channel Archived', `<#${event.channel}> (id: ${event.channel}) was archived by <@${event.user}>.`, privChannel, logger);
+    await messandstore(client, 'Channel Archived', `<#${event.channel}> (id: ${event.channel}) was archived by @${user.user?.profile?.display_name || user.user?.profile?.real_name || 'Unknown User'} (${event.user}).`, privChannel, logger);
     publicMessage(client, 'Channel Archived', `<#${event.channel}> (id: ${event.channel}) was archived by @${user.user?.profile?.display_name || user.user?.profile?.real_name || 'Unknown User'} (${event.user}).`, pubChannel, logger);
   });
 
@@ -192,7 +220,8 @@ const register = (app: App) => {
 
   app.event('channel_unarchive', async ({ event, client, logger }) => {
     const user = await client.users.info({ user: event.user });
-    await messandstore(client, 'Channel Unarchived', `<#${event.channel}> (id: ${event.channel}) was unarchived by <@${event.user}>.`, privChannel, logger);
+    await postinping(client, 'Channel Unarchived', `<#${event.channel}> (id: ${event.channel}) was unarchived by <@${event.user}>.`, pingChannel, logger);
+    await messandstore(client, 'Channel Unarchived', `<#${event.channel}> (id: ${event.channel}) was unarchived by @${user.user?.profile?.display_name || user.user?.profile?.real_name || 'Unknown User'} (${event.user}).`, privChannel, logger);
     publicMessage(client, 'Channel Unarchived', `<#${event.channel}> (id: ${event.channel}) was unarchived by @${user.user?.profile?.display_name || user.user?.profile?.real_name || 'Unknown User'} (${event.user}).`, pubChannel, logger);
   });
 
@@ -201,7 +230,8 @@ const register = (app: App) => {
     const user = await client.users.info({ user: msg.user });
 
     if (msg.subtype === 'channel_convert_to_public') {
-      await messandstore(client, 'Channel Made Public', `Channel <#${msg.channel}> (id: ${msg.channel}) was made public by <@${msg.user}>.`, privChannel, logger);
+      await postinping(client, 'Channel Made Public', `Channel <#${msg.channel}> (id: ${msg.channel}) was made public by <@${msg.user}>.`, pingChannel, logger);
+      await messandstore(client, 'Channel Made Public', `Channel <#${msg.channel}> (id: ${msg.channel}) was made public by @${user.user?.profile?.display_name || user.user?.profile?.real_name || 'Unknown User'} (${msg.user}).`, privChannel, logger);
       publicMessage(client, 'Channel Made Public', `Channel <#${msg.channel}> (id: ${msg.channel}) was made public by @${user.user?.profile?.display_name || user.user?.profile?.real_name || 'Unknown User'} (${msg.user}).`, pubChannel, logger);
       const chan = await client.conversations.open({ users: "U091EPSQ3E3" });
       if (msg && chan.channel && chan.channel.id) {
@@ -211,10 +241,6 @@ const register = (app: App) => {
         });
       }
     } 
-    else if (msg.subtype === 'channel_convert_to_private') {
-      await messandstore(client, 'Channel Made Private', `Channel <#${msg.channel}> (id: ${msg.channel}) was made private by <@${msg.user}>.`, privChannel, logger);
-      publicMessage(client, 'Channel Made Private', `Channel <#${msg.channel}> (id: ${msg.channel}) was made private by @${user.user?.profile?.display_name || user.user?.profile?.real_name || 'Unknown User'} (${msg.user}).`, pubChannel, logger);
-    }
   });
 
   app.event('subteam_created', async ({ event, client, logger }) => {
@@ -230,7 +256,15 @@ const register = (app: App) => {
 
     const user = await client.users.info({ user: event.subteam.created_by });
 
-    await messandstore(client, 'Subteam Added', `<!subteam^${event.subteam.id}> (${event.subteam.handle}) was made by <@${event.subteam.created_by}>. Details: \n
+    await postinping(client, 'Subteam Added', `<!subteam^${event.subteam.id}> (${event.subteam.handle}) was made by <@${event.subteam.created_by}>. Details: \n
+      Name: ${event.subteam.name}\n
+      Users: ${usersarray}\n
+      User count: ${event.subteam.user_count}\n
+      Description: ${event.subteam.description}\n
+      Channels: ${channelarray}\n
+      Channel count: ${event.subteam.channel_count}
+      `, pingChannel, logger);
+    await messandstore(client, 'Subteam Added', `<!subteam^${event.subteam.id}> (${event.subteam.handle}) was made by @${user.user?.profile?.display_name || user.user?.profile?.real_name || 'Unknown User'} (${event.subteam.created_by}). Details: \n
       Name: ${event.subteam.name}\n
       Users: ${usersarray}\n
       User count: ${event.subteam.user_count}\n
@@ -250,18 +284,28 @@ const register = (app: App) => {
 
   app.event('subteam_members_changed', async ({ event, client, logger }) => {
     let addarray = "none";
+    let addarray1 = "none";
     if (event.added_users && event.added_users.length > 0) {
       addarray = event.added_users.map((id: any) => `<@${id}>`).join(', ');
+      addarray1 = event.added_users.map((id: any) => `@${id}`).join(', ');
     }
 
     let removedarray = "none";
+    let removedarray1 = "none";
     if (event.removed_users && event.removed_users.length > 0) {
       removedarray = event.removed_users.map((id: any) => `<@${id}>`).join(', ');
+      removedarray1 = event.removed_users.map((id: any) => `@${id}`).join(', ');
     }
-    await messandstore(client, 'Subteam Members Changed', `<!subteam^${event.subteam_id}> change was a member one:\n
+    await postinping(client, 'Subteam Members Changed', `<!subteam^${event.subteam_id}> change was a member one:\n
       Added users: ${addarray}\n
       Added count: ${event.added_users_count}\n
       Deleted users: ${removedarray}\n
+      Deleted count: ${event.removed_users_count}\n`, 
+    pingChannel, logger);
+    await messandstore(client, 'Subteam Members Changed', `@${event.subteam_id} change was a member one:\n
+      Added users: ${addarray1}\n
+      Added count: ${event.added_users_count}\n
+      Deleted users: ${removedarray1}\n
       Deleted count: ${event.removed_users_count}\n`, 
     privChannel, logger);
   });
@@ -287,12 +331,22 @@ const register = (app: App) => {
         : null;
       const datestring = thedate ? thedate.toLocaleString() : 'unknown';
       const user = await client.users.info({ user: (event.subteam as any).deleted_by });
-      await messandstore(client, 'Subteam Deleted', `@${event.subteam.handle} was deleted by <@${event.subteam.deleted_by}>. Details:\n
+      await postinping(client, 'Subteam Deleted', `<!subteam^${event.subteam_id}> (${event.subteam.handle}) was deleted by <@${event.subteam.deleted_by}>. Details:\n
         Date created: ${datestring}\n
         Name: ${event.subteam.name}\n
         Created by: <@${event.subteam.created_by}>\n
         Description: ${event.subteam.description}\n
         Members: ${usersarray}\n
+        Member count: ${event.subteam.user_count}\n
+        Channels: ${channelarray}\n
+        Channel count: ${event.subteam.channel_count}`, 
+      pingChannel, logger);
+      await messandstore(client, 'Subteam Deleted', `@${event.subteam.handle} was deleted by @${user.user?.profile?.display_name || user.user?.profile?.real_name || 'Unknown User'} (${event.subteam.deleted_by}). Details:\n
+        Date created: ${datestring}\n
+        Name: ${event.subteam.name}\n
+        Created by: <@${event.subteam.created_by}>\n
+        Description: ${event.subteam.description}\n
+        Members: ${pubusersarray}\n
         Member count: ${event.subteam.user_count}\n
         Channels: ${channelarray}\n
         Channel count: ${event.subteam.channel_count}`, 
@@ -308,16 +362,27 @@ const register = (app: App) => {
         Channel count: ${event.subteam.channel_count}
       `, pubChannel, logger);
     } else {
+      const user = await client.users.info({ user: (event.subteam as any).updated_by });
       const thedate = event.subteam.date_create
         ? new Date(event.subteam.date_create * 1000)
         : null;
       const datestring = thedate ? thedate.toLocaleString() : 'unknown';
-      await messandstore(client, 'Subteam Changed', `<!subteam^${event.subteam.id}> was updated by <@${event.subteam.updated_by}>. Details:\n
+      await postinping(client, 'Subteam Changed', `<!subteam^${event.subteam.id}> was updated by <@${event.subteam.updated_by}>. Details:\n
           Date created: ${datestring}\n
           Name: ${event.subteam.name}\n
           Created by: <@${event.subteam.created_by}>\n
           Description: ${event.subteam.description}\n
           Members: ${usersarray}\n
+          Member count: ${event.subteam.user_count}\n
+          Channels: ${channelarray}\n
+          Channel count: ${event.subteam.channel_count}`, 
+      pingChannel, logger);
+      await messandstore(client, 'Subteam Changed', `@${event.subteam.id} was updated by @${user.user?.profile?.display_name || user.user?.profile?.real_name || 'Unknown User'} (${event.subteam.updated_by}). Details:\n
+          Date created: ${datestring}\n
+          Name: ${event.subteam.name}\n
+          Created by: <@${event.subteam.created_by}>\n
+          Description: ${event.subteam.description}\n
+          Members: ${pubusersarray}\n
           Member count: ${event.subteam.user_count}\n
           Channels: ${channelarray}\n
           Channel count: ${event.subteam.channel_count}`, 
@@ -354,8 +419,10 @@ const register = (app: App) => {
         : null;
       const startStr = start ? start.toLocaleString() : 'unknown';
       const endStr = end ? end.toLocaleString() : 'unknown';
+      await postinping(client, 'Dnd Set Active', `<@${event.user}> has turned on their Do Not Disturb\nStarts: ${startStr}\nEnds: ${endStr}!`, pingChannel, logger);
       await messandstore(client, 'Dnd Set Active', `@${user.user?.profile?.display_name || user.user?.profile?.real_name || 'Unknown User'} (${event.user}) has turned on their Do Not Disturb\nStarts: ${startStr}\nEnds: ${endStr}!`, privChannel, logger);
     } else if (event.dnd_status.dnd_enabled == false) {
+      await postinping(client, 'Dnd Set Inactive', `<@${event.user}> has turned off their Do Not Disturb.`, pingChannel, logger);
       await messandstore(client, 'Dnd Set Inactive', `@${user.user?.profile?.display_name || user.user?.profile?.real_name || 'Unknown User'} (${event.user}) has turned off their Do Not Disturb.`, privChannel, logger);
     }
   });
@@ -365,8 +432,10 @@ const register = (app: App) => {
     if (event.user.profile.huddle_state == "in_a_huddle") {
       const callId = (event.user.profile as any).huddle_state_call_id;
       const callInfo = callId ? ` (call ID: \`${callId}\`)` : "";
+      await postinping(client, 'Huddle Joined', `<@${event.user.id}> has joined a huddle ${callInfo}!`, pingChannel, logger);
       await messandstore(client, 'Huddle Joined', `@${user.user?.profile?.display_name || user.user?.profile?.real_name || 'Unknown User'} (${event.user.id}) has joined a huddle ${callInfo}!`, privChannel, logger);
     } else {
+      await postinping(client, 'Huddle Left', `<@${event.user.id}> has left a huddle.`, pingChannel, logger);
       await messandstore(client, 'Huddle Left', `@${user.user?.profile?.display_name || user.user?.profile?.real_name || 'Unknown User'} (${event.user.id}) has left a huddle.`, privChannel, logger);
     }
   });
@@ -395,6 +464,10 @@ const register = (app: App) => {
       const user = await client.users.info({ user: event.user_id });
 
       const fileid = event.file.id;
+      await postinping(client, 'File Shared', `File ${fileid} has been shared. Details:\n
+        Channel: <#${event.channel_id}>\n
+        User: <@${event.user_id}>`, 
+      pingChannel, logger);
       await messandstore(client, 'File Shared', `File ${fileid} has been shared. Details:\n
         Channel: <#${event.channel_id}>\n
         User: @${user.user?.profile?.display_name || user.user?.profile?.real_name || 'Unknown User'} (${event.user_id})`, 

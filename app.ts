@@ -23,6 +23,7 @@ cron.schedule('0 * * * *', async () => {
   
   const privChannel = 'C09TXAZ8GAG'; 
   const pubChannel = 'C09UH2LCP1Q';
+  const pingChannel = 'C0AN1HZQF0R';
 
   const allRecords = await dbAll('SELECT * FROM Data') as any[];
   const recordMap = Object.fromEntries(
@@ -37,6 +38,7 @@ cron.schedule('0 * * * *', async () => {
     Channels deleted: ${recordMap["Channel Deleted"]?.Number ?? 0}\n
     Channels unarchived: ${recordMap["Channel Unarchived"]?.Number ?? 0}\n
     Channels renamed: ${recordMap["Channel Renamed"]?.Number ?? 0}\n
+    Channels made public: ${recordMap["Channel Made Public"]?.Number ?? 0}\n
     User groups added: ${recordMap["Subteam Added"]?.Number ?? 0}\n
     User groups edited: ${recordMap["Subteam Changed"]?.Number ?? 0} with ${recordMap["Subteam Members Changed"]?.Number ?? 0} of those edits being member changes\n
     User groups deleted: ${recordMap["Subteam Deleted"]?.Number ?? 0}\n
@@ -54,9 +56,6 @@ cron.schedule('0 * * * *', async () => {
     Files deleted: ${recordMap["File Deleted"]?.Number ?? 0}\n
     Files made public: ${recordMap["File Public"]?.Number ?? 0}\n
     Files unshared: ${recordMap["File Unshared"]?.Number ?? 0}\n
-    Usernames changed: ${recordMap["Username Changed"]?.Number ?? 0}\n
-    Real names changed: ${recordMap["Real Name Changed"]?.Number ?? 0}\n
-    Display names changed: ${recordMap["Display Name Changed"]?.Number ?? 0}\n
     Users deactivated: ${recordMap["User Deactivated"]?.Number ?? 0}\n
     Users reactivated: ${recordMap["User Reactivated"]?.Number ?? 0}\n
     Users became admin: ${recordMap["User Become Admin"]?.Number ?? 0}\n
@@ -66,16 +65,6 @@ cron.schedule('0 * * * *', async () => {
     Changed to MCG: ${recordMap["Change to MCG"]?.Number ?? 0}\n
     Changed to SCG: ${recordMap["Change to SCG"]?.Number ?? 0}\n
     Changed to member: ${recordMap["Change to User"]?.Number ?? 0}\n
-    Pronouns changed: ${recordMap["Pronouns Changed"]?.Number ?? 0}\n
-    Emails changed: ${recordMap["Emails Changed"]?.Number ?? 0}\n
-    Title changed: ${recordMap["Title Changed"]?.Number ?? 0}\n
-    Phone number changed: ${recordMap["Phone Number Changed"]?.Number ?? 0}\n
-    Start date changed: ${recordMap["Start Date Changed"]?.Number ?? 0}\n
-    Timezone changed: ${recordMap["Timezone Changed"]?.Number ?? 0}\n
-    Status text changed: ${recordMap["Status Text Changed"]?.Number ?? 0}\n
-    Status emoji changed: ${recordMap["Status Emoji Changed"]?.Number ?? 0}\n
-    Status expiration changed: ${recordMap["Status Expiration Changed"]?.Number ?? 0}\n
-    Profile image changed: ${recordMap["Profile Image Change"]?.Number ?? 0}\n
     `;
   await app.client.chat.postMessage({
     channel: privChannel,
@@ -94,6 +83,7 @@ cron.schedule('0 * * * *', async () => {
     {field: 'Channel Deleted', text: `Channels deleted: `},
     {field: 'Channel Unarchived', text: `Channels unarchived: `},
     {field: 'Channel Renamed', text: `Channels renamed: `},
+    {field: 'Channel Made Public', text: `Channels made public: `},
     {field: 'Subteam Added', text: `User groups added: `},
     {field: 'Subteam Changed', text: `User groups modified: `},
     {field: 'Subteam Deleted', text: `User groups deleted: `},
@@ -111,9 +101,6 @@ cron.schedule('0 * * * *', async () => {
     {field: 'File Deleted', text: `Files deleted: `},
     {field: 'File Public', text: `Files made public: `},
     {field: 'File Unshared', text: `Files unshared: `},
-    {field: 'Username Changed', text: `Usernames changed: `},
-    {field: 'Real Name Changed', text: `Real names changed: `},
-    {field: 'Display Name Changed', text: `Display names changed: `},
     {field: 'User Deactivated', text: `User deactivated: `},
     {field: 'User Reactivated', text: `User reactivated: `},
     {field: 'User Become Admin', text: `User became admin: `},
@@ -123,21 +110,10 @@ cron.schedule('0 * * * *', async () => {
     {field: 'Change to MCG', text: `User changed to MCG: `},
     {field: 'Change to SCG', text: `User changed to SCG: `},
     {field: 'Change to User', text: `User changed to member: `},
-    {field: 'Pronouns Changed', text: `Pronouns changed: `},
-    {field: 'Emails Changed', text: `Emails changed: `},
-    {field: 'Title Changed', text: `Title changed: `},
-    {field: 'Phone Number Changed', text: `Phone number changed: `},
-    {field: 'Start Date Changed', text: `Start date changed: `},
-    {field: 'Timezone Changed', text: `Timezone changed: `},
-    {field: 'Status Text Changed', text: `Status text changed: `},
-    {field: 'Status Emoji Changed', text: `Status emoji changed: `},
-    {field: 'Status Expiration Changed', text: `Status expiration changed: `},
-    {field: 'Profile Image Change', text: `Profile image changed: `},
-    {field: 'Channel Made Public', text: `Channel made public: `},
-    {field: 'Channel Made Private', text: `Channel made private: `},
   ];
 
   const airtablePayload: { field: string; ts: any; number: number; channel: string; PubMes?: any}[] = [];
+  const pingPayload: { field: string; ts: any}[] = [];
   for (const thread of privthreads) {
     const rep = await app.client.chat.postMessage({
       channel: privChannel,
@@ -149,12 +125,24 @@ cron.schedule('0 * * * *', async () => {
       number: 0,
       channel: privChannel
     });
+    const rep1 = await app.client.chat.postMessage({
+      channel: pingChannel,
+      text: thread.text,
+    });
+    pingPayload.push({
+      field: thread.field,
+      ts: rep1.ts
+    });
     if (thread.field == "Subteam Changed") {
       airtablePayload.push({
         field: "Subteam Members Changed",
         ts: rep.ts,
         number: 0,
         channel: privChannel
+      });
+      pingPayload.push({
+        field: "Subteam Members Changed",
+        ts: rep1.ts
       });
     }
   }
@@ -165,6 +153,13 @@ cron.schedule('0 * * * *', async () => {
       payload.ts,
       payload.number,
       payload.PubMes ?? null,
+      payload.field
+    );
+  }
+  for (const payload of pingPayload) {
+    await dbRun(
+      'UPDATE PingChannelData SET Messagets = ? WHERE Field = ?',
+      payload.ts,
       payload.field
     );
   }
