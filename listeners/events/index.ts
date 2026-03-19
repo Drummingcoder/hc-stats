@@ -337,7 +337,7 @@ const register = (app: App) => {
       await messandstore(client, 'Subteam Deleted', `@${event.subteam.handle} was deleted by @${user.user?.profile?.display_name || user.user?.profile?.real_name || 'Unknown User'} (${event.subteam.deleted_by}). Details:\n
         Date created: ${datestring}\n
         Name: ${event.subteam.name}\n
-        Created by: <@${event.subteam.created_by}>\n
+        Created by: @${event.subteam.created_by}\n
         Description: ${event.subteam.description}\n
         Members: ${pubusersarray}\n
         Member count: ${event.subteam.user_count}\n
@@ -347,7 +347,7 @@ const register = (app: App) => {
       publicMessage(client, 'Subteam Deleted', `@${event.subteam.handle} was deleted by @${user.user?.profile?.display_name || user.user?.profile?.real_name || 'Unknown User'} (${event.subteam.deleted_by}). Details:\n
         Date created: ${datestring}\n
         Name: ${event.subteam.name}\n
-        Created by: <@${event.subteam.created_by}>\n
+        Created by: @${event.subteam.created_by}\n
         Description: ${event.subteam.description}\n
         Members: ${pubusersarray}\n
         Member count: ${event.subteam.user_count}\n
@@ -373,7 +373,7 @@ const register = (app: App) => {
       await messandstore(client, 'Subteam Changed', `@${event.subteam.id} was updated by @${user.user?.profile?.display_name || user.user?.profile?.real_name || 'Unknown User'} (${event.subteam.updated_by}). Details:\n
           Date created: ${datestring}\n
           Name: ${event.subteam.name}\n
-          Created by: <@${event.subteam.created_by}>\n
+          Created by: @${event.subteam.created_by}\n
           Description: ${event.subteam.description}\n
           Members: ${pubusersarray}\n
           Member count: ${event.subteam.user_count}\n
