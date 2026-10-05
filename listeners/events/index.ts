@@ -7,6 +7,7 @@ const pubChannel = 'C09UH2LCP1Q';
 const pingChannel = 'C0AN1HZQF0R';
 const emojiLogChannel = "C0AJ5P055NY";
 const stickerBotChannel = 'C08TSAUM9D1';
+const activatedChannel = 'C0C6Y7UGH25';
 
 const turso = createClient({
   url: process.env.TURSO_DATABASE_URL || "",
@@ -156,6 +157,13 @@ const publicMessage = async (client: any, field: string, message: string, channe
     if (field == "Emoji Added" || field == "Emoji Removed" || field == "Emoji Changed" || field == "Emoji Alias Added") {
       await client.chat.postMessage({
         channel: emojiLogChannel,
+        text: message,
+      });
+    }
+
+    if (field == 'User Deactivated' || field == 'User Reactivated') {
+      await client.chat.postMessage({
+        channel: activatedChannel,
         text: message,
       });
     }
