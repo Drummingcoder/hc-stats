@@ -240,7 +240,7 @@ const register = (app: App) => {
     // Detect StickerBot starting a new sticker
     if (msg.channel === stickerBotChannel && typeof msg.text === 'string') {
       const match = msg.text.match(
-        /Creating new \d+x\d+ sticker:\s*"([^"]+)"/i
+        /Creating new \d+x\d+(?:\s+\S+)?\s+sticker:\s*"([^"]+)"/i
       );
 
       if (match) {
@@ -249,12 +249,12 @@ const register = (app: App) => {
         logger.info(`Detected new StickerBot sticker: ${stickerName}`);
 
         const emojiRoot = await client.chat.postMessage({
-          channel: privChannel,
+          channel: emojiLogChannel,
           text: `Incoming <#${stickerBotChannel}> sticker, named ${stickerName}`,
         });
 
         const publicRoot = await client.chat.postMessage({
-          channel: privChannel,
+          channel: pubChannel,
           text: `Incoming <#${stickerBotChannel}> sticker, named ${stickerName}`,
         });
 
@@ -458,23 +458,8 @@ const register = (app: App) => {
         return false;
       }
 
-      const normalizedStickerName = activeSticker.sticker_name
-        .toLowerCase()
-        .replace(/[^a-z0-9_-]/g, '');
-
-      const normalizedEmojiName = emojiName.toLowerCase();
-
-      if (!normalizedEmojiName.startsWith(`${normalizedStickerName}-`)) {
-        logger.info(
-          `Emoji ${emojiName} does not match active sticker ${activeSticker.sticker_name}`
-        );
-
-        return false;
-      }
-
-      // For now, consider the sticker import active for 20 minutes.
+      // Expire old imports FIRST
       const IMPORT_TIMEOUT = 20 * 60 * 1000;
-
       const age = Date.now() - Number(activeSticker.started_at);
 
       if (age > IMPORT_TIMEOUT) {
@@ -489,14 +474,29 @@ const register = (app: App) => {
         return false;
       }
 
+      // THEN check whether the emoji belongs to this sticker
+      const normalizedStickerName = activeSticker.sticker_name
+        .toLowerCase()
+        .replace(/[^a-z0-9_-]/g, '');
+
+      const normalizedEmojiName = emojiName.toLowerCase();
+
+      if (!normalizedEmojiName.startsWith(`${normalizedStickerName}-`)) {
+        logger.info(
+          `Emoji ${emojiName} does not match active sticker ${activeSticker.sticker_name}`
+        );
+
+        return false;
+      }
+
       await client.chat.postMessage({
-        channel: privChannel,
+        channel: emojiLogChannel,
         text: message,
         thread_ts: activeSticker.emoji_thread_ts,
       });
 
       await client.chat.postMessage({
-        channel: privChannel,
+        channel: pubChannel,
         text: message,
         thread_ts: activeSticker.public_thread_ts,
       });
@@ -514,6 +514,10 @@ const register = (app: App) => {
 
   app.event('emoji_changed', async ({ event, client, logger }) => {
     if (event.subtype == 'add') {
+      if (!event.name) {
+        logger.warn('emoji_changed add event had no name');
+        return;
+      }
       let field: string;
       let message: string;
 
@@ -533,11 +537,6 @@ const register = (app: App) => {
         privChannel,
         logger
       );
-
-      if (!event.name) {
-        logger.warn('emoji_changed add event had no name');
-        return;
-      }
 
       const postedToSticker = await postToStickerThreads(
         client,
