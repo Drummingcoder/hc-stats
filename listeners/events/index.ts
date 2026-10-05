@@ -5,6 +5,8 @@ import { createClient } from "@libsql/client";
 const privChannel = 'C09TXAZ8GAG'; 
 const pubChannel = 'C09UH2LCP1Q';
 const pingChannel = 'C0AN1HZQF0R';
+const emojiLogChannel = "C0AJ5P055NY";
+const stickerBotChannel = 'C08TSAUM9D1';
 
 const turso = createClient({
   url: process.env.TURSO_DATABASE_URL || "",
@@ -64,8 +66,16 @@ try {
       Messagets TEXT
     )
   `);
-  console.log('Database table "Data" ready');
-  console.log('Database table "PingChannelData" ready');
+  await turso.execute(`
+    CREATE TABLE IF NOT EXISTS StickerImport (
+      id INTEGER PRIMARY KEY CHECK (id = 1),
+      sticker_name TEXT NOT NULL,
+      emoji_thread_ts TEXT NOT NULL,
+      public_thread_ts TEXT NOT NULL,
+      started_at INTEGER NOT NULL
+    )
+  `);
+  console.log('Database table "StickerImport" ready');
 
   const initialFields = [
     'New User', 'New Bot', 'New Workflow Bot', 'Channel Created',
@@ -145,7 +155,7 @@ const publicMessage = async (client: any, field: string, message: string, channe
 
     if (field == "Emoji Added" || field == "Emoji Removed" || field == "Emoji Changed" || field == "Emoji Alias Added") {
       await client.chat.postMessage({
-        channel: "C0AJ5P055NY",
+        channel: emojiLogChannel,
         text: message,
       });
     }
@@ -227,13 +237,63 @@ const register = (app: App) => {
 
   app.event('message', async ({ event, client, logger }) => {
     const msg = event as any; 
-    const user = await client.users.info({ user: msg.user });
+    // Detect StickerBot starting a new sticker
+    if (msg.channel === stickerBotChannel && typeof msg.text === 'string') {
+      const match = msg.text.match(
+        /Creating new \d+x\d+ sticker:\s*"([^"]+)"/i
+      );
+
+      if (match) {
+        const stickerName = match[1].trim();
+
+        logger.info(`Detected new StickerBot sticker: ${stickerName}`);
+
+        const emojiRoot = await client.chat.postMessage({
+          channel: privChannel,
+          text: `Incoming <#${stickerBotChannel}> sticker, named ${stickerName}`,
+        });
+
+        const publicRoot = await client.chat.postMessage({
+          channel: privChannel,
+          text: `Incoming <#${stickerBotChannel}> sticker, named ${stickerName}`,
+        });
+
+        if (emojiRoot.ts && publicRoot.ts) {
+          await dbRun(
+            `
+            INSERT OR REPLACE INTO StickerImport
+              (
+                id,
+                sticker_name,
+                emoji_thread_ts,
+                public_thread_ts,
+                started_at
+              )
+            VALUES
+              (1, ?, ?, ?, ?)
+            `,
+            stickerName,
+            emojiRoot.ts,
+            publicRoot.ts,
+            Date.now()
+          );
+        }
+
+        return;
+      }
+    }
 
     if (msg.subtype === 'channel_convert_to_public') {
+      if (!msg.user) {
+        logger.warn('channel_convert_to_public event had no user');
+        return;
+      }
+      const user = await client.users.info({ user: msg.user });
+      
       await postinping(client, 'Channel Made Public', `Channel <#${msg.channel}> (id: ${msg.channel}) was made public by <@${msg.user}>.`, pingChannel, logger);
       await messandstore(client, 'Channel Made Public', `Channel <#${msg.channel}> (id: ${msg.channel}) was made public by @${user.user?.profile?.display_name || user.user?.profile?.real_name || 'Unknown User'} (${msg.user}).`, privChannel, logger);
       publicMessage(client, 'Channel Made Public', `Channel <#${msg.channel}> (id: ${msg.channel}) was made public by @${user.user?.profile?.display_name || user.user?.profile?.real_name || 'Unknown User'} (${msg.user}).`, pubChannel, logger);
-    } 
+    }
   });
 
   app.event('subteam_created', async ({ event, client, logger }) => {
@@ -383,14 +443,119 @@ const register = (app: App) => {
     }
   });
 
+  const postToStickerThreads = async (
+    client: any,
+    emojiName: string,
+    message: string,
+    logger: any
+  ): Promise<boolean> => {
+    try {
+      const activeSticker = await dbGet(
+        'SELECT * FROM StickerImport WHERE id = 1'
+      ) as any;
+
+      if (!activeSticker) {
+        return false;
+      }
+
+      const normalizedStickerName = activeSticker.sticker_name
+        .toLowerCase()
+        .replace(/[^a-z0-9_-]/g, '');
+
+      const normalizedEmojiName = emojiName.toLowerCase();
+
+      if (!normalizedEmojiName.startsWith(`${normalizedStickerName}-`)) {
+        logger.info(
+          `Emoji ${emojiName} does not match active sticker ${activeSticker.sticker_name}`
+        );
+
+        return false;
+      }
+
+      // For now, consider the sticker import active for 20 minutes.
+      const IMPORT_TIMEOUT = 20 * 60 * 1000;
+
+      const age = Date.now() - Number(activeSticker.started_at);
+
+      if (age > IMPORT_TIMEOUT) {
+        logger.info(
+          `Sticker import ${activeSticker.sticker_name} expired`
+        );
+
+        await dbRun(
+          'DELETE FROM StickerImport WHERE id = 1'
+        );
+
+        return false;
+      }
+
+      await client.chat.postMessage({
+        channel: privChannel,
+        text: message,
+        thread_ts: activeSticker.emoji_thread_ts,
+      });
+
+      await client.chat.postMessage({
+        channel: privChannel,
+        text: message,
+        thread_ts: activeSticker.public_thread_ts,
+      });
+
+      logger.info(
+        `Posted emoji event to sticker threads for ${activeSticker.sticker_name}`
+      );
+
+      return true;
+    } catch (error) {
+      logger.error('Error posting to sticker threads', error);
+      return false;
+    }
+  };
+
   app.event('emoji_changed', async ({ event, client, logger }) => {
     if (event.subtype == 'add') {
+      let field: string;
+      let message: string;
+
       if (event.value?.startsWith("alias")) {
-        await messandstore(client, 'Emoji Alias Added', `:${event.name}: was added (alias of :${event.value.split(":")[1]}:)!`, privChannel, logger);
-        publicMessage(client, 'Emoji Alias Added', `:${event.name}: was added (alias of :${event.value.split(":")[1]}:)!`, pubChannel, logger);
+        field = 'Emoji Alias Added';
+        message = `:${event.name}: was added (alias of :${event.value.split(":")[1]}:)!`;
       } else {
-        await messandstore(client, 'Emoji Added', `:${event.name}: was added!`, privChannel, logger);
-        publicMessage(client, 'Emoji Added', `:${event.name}: was added!`, pubChannel, logger);
+        field = 'Emoji Added';
+        message = `:${event.name}: was added!`;
+      }
+
+      // Keep the normal private log/count
+      await messandstore(
+        client,
+        field,
+        message,
+        privChannel,
+        logger
+      );
+
+      if (!event.name) {
+        logger.warn('emoji_changed add event had no name');
+        return;
+      }
+
+      const postedToSticker = await postToStickerThreads(
+        client,
+        event.name,
+        message,
+        logger
+      );
+
+      // If this wasn't part of a StickerBot import,
+      // use the normal public + emoji-log behavior.
+      if (!postedToSticker) {
+        await publicMessage(
+          client,
+          field,
+          message,
+          pubChannel,
+          logger
+        );
       }
     } else if (event.subtype == 'remove') {
       await messandstore(client, 'Emoji Removed', `${event.names} was removed.`, privChannel, logger);
